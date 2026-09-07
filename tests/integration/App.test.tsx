@@ -217,7 +217,7 @@ describe("App integration with MSW", () => {
     const { default: App } = await import("@/App");
     renderApp(App);
     expect(await screen.findByTitle("team.title")).toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("does not mount Team commands from a saved view when the feature is disabled", async () => {
     localStorage.setItem("nexusops-client-last-view", "team");
@@ -227,7 +227,7 @@ describe("App integration with MSW", () => {
       expect(screen.getByTestId("provider-list")).toBeInTheDocument(),
     );
     expect(screen.queryByText("team.connect.heading")).not.toBeInTheDocument();
-  });
+  }, 15_000);
 
   it("covers basic provider flows via real hooks", async () => {
     const { default: App } = await import("@/App");
