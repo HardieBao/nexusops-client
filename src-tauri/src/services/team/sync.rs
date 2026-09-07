@@ -1034,6 +1034,7 @@ fn hard_recovery_asset_limits(template: &AssetLimits) -> AssetLimits {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn apply_upstream_backup(
     app_state: &AppState,
     connection: &TeamConnection,
@@ -1582,6 +1583,7 @@ fn failed_plan_item(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn effective_local_hash(
     state: &AppState,
     connection: &TeamConnection,
@@ -1951,6 +1953,7 @@ fn target_for_kind(
     ))
 }
 
+#[allow(clippy::too_many_arguments)]
 fn integrate_with_upstream(
     state: &AppState,
     connection: &TeamConnection,

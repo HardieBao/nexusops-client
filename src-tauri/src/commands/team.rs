@@ -24,11 +24,10 @@ pub struct TeamServiceState {
 
 impl TeamServiceState {
     pub fn open(data_dir: &Path, app_state: &AppState) -> Self {
-        let service = TeamService::open(data_dir).map(|service| {
-            if let Err(error) = sync::repair_pending_upstream(&service, app_state) {
+        let service = TeamService::open(data_dir).inspect(|service| {
+            if let Err(error) = sync::repair_pending_upstream(service, app_state) {
                 log::warn!("Team upstream recovery was deferred: {error}");
             }
-            service
         });
         Self {
             service: service.map(Arc::new).map_err(TeamCommandError::from),

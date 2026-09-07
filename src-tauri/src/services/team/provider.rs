@@ -141,10 +141,8 @@ pub fn apply_provider(
             && existing.as_ref().is_some_and(|provider| {
                 ProviderService::provider_live_config_managed(provider) == Some(true)
             }));
-    if active {
-        if preview.change != ProviderChange::Unchanged {
-            return Err(TeamProviderError::ActiveProviderUpdate);
-        }
+    if active && preview.change != ProviderChange::Unchanged {
+        return Err(TeamProviderError::ActiveProviderUpdate);
     }
     let next_link = ManagedProviderLink {
         connection_id: connection.id.clone(),

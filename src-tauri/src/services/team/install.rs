@@ -982,11 +982,12 @@ fn hash_local_skill(
 }
 
 #[allow(clippy::too_many_arguments)]
-fn scan_skill_dir<'a>(
+#[cfg_attr(unix, allow(clippy::only_used_in_recursion))]
+fn scan_skill_dir(
     root: &Path,
     directory: &Path,
     limits: ContentLimits,
-    modes: &HashMap<&'a str, bool>,
+    modes: &HashMap<&str, bool>,
     entries: &mut Vec<FileEntry>,
     nodes: &mut HashMap<String, PathNode>,
     unpacked: &mut u64,
@@ -1202,7 +1203,7 @@ fn metadata_executable(metadata: &fs::Metadata) -> bool {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        return metadata.permissions().mode() & 0o111 != 0;
+        metadata.permissions().mode() & 0o111 != 0
     }
     #[cfg(not(unix))]
     {
