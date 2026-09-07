@@ -544,6 +544,50 @@ pub(crate) mod tests {
     }
 
     #[tokio::test]
+    async fn unsupported_profile_and_manifest_versions_are_rejected() {
+        let mut profile = super::super::types::fixture_profile();
+        profile.schema_version = 2;
+        let manifest = Manifest {
+            schema_version: 2,
+            assets: Vec::new(),
+            conflicts: Vec::new(),
+        };
+        let (gateway, handle) = serve(
+            Router::new()
+                .route(
+                    "/api/v1/me/team-profile",
+                    get(move || {
+                        let profile = profile.clone();
+                        async move { Json(serde_json::json!({ "code": 0, "data": profile })) }
+                    }),
+                )
+                .route(
+                    "/api/v1/me/assets/manifest",
+                    get(move || {
+                        let manifest = manifest.clone();
+                        async move { Json(serde_json::json!({ "code": 0, "data": manifest })) }
+                    }),
+                ),
+        )
+        .await;
+        let api = TeamApi::new(&gateway).unwrap();
+
+        assert_eq!(
+            api.profile("nx_synthetic_fixture", &Cancellation::default())
+                .await
+                .unwrap_err(),
+            TeamError::InvalidResponse
+        );
+        assert_eq!(
+            api.manifest("nx_synthetic_fixture", &Cancellation::default())
+                .await
+                .unwrap_err(),
+            TeamError::InvalidResponse
+        );
+        handle.abort();
+    }
+
+    #[tokio::test]
     async fn text_download_defers_bom_and_crlf_hashing_to_content_verification() {
         let body = b"\xef\xbb\xbfa\r\n".to_vec();
         let served = body.clone();

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { TeamPage } from "@/features/team/TeamPage";
@@ -166,6 +167,32 @@ describe("TeamPage", () => {
       screen.queryByText(/nx_synthetic_member_secret/),
     ).not.toBeInTheDocument();
     expect(api.previewTeamSync).toHaveBeenCalledWith("codex");
+  });
+
+  it("keeps a long identity and empty catalog keyboard-operable in both themes", async () => {
+    const longName =
+      "平台研发与安全联合工作区 · 亚太区基础设施与开发者体验团队";
+    api.getTeamStatus.mockResolvedValue({
+      ...connection,
+      profile: { ...connection.profile, name: longName },
+    });
+
+    for (const dark of [false, true]) {
+      document.documentElement.classList.toggle("dark", dark);
+      const user = userEvent.setup();
+      const view = render(<TeamPage />);
+
+      await screen.findByText(longName);
+      expect(screen.getByText("team.assets.empty")).toBeInTheDocument();
+      const refresh = screen.getByRole("button", {
+        name: "team.actions.refresh",
+      });
+      await user.tab();
+      expect(refresh).toHaveFocus();
+
+      view.unmount();
+    }
+    document.documentElement.classList.remove("dark");
   });
 
   it("restores an offline local backup once and reports refresh separately", async () => {
