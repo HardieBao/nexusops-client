@@ -42,6 +42,7 @@ const success = <T>(payload: T) => HttpResponse.json(payload as any);
 
 export const handlers = [
   http.get(MODELS_DEV_API_URL, () => success({})),
+  http.post(`${TAURI_ENDPOINT}/team_feature_enabled`, () => success(false)),
   http.post(`${TAURI_ENDPOINT}/get_migration_result`, () => success(false)),
   http.post(`${TAURI_ENDPOINT}/get_skills_migration_result`, () =>
     success(null),

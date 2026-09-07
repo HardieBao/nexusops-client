@@ -62,6 +62,19 @@ impl PromptService {
         state.db.get_prompts(app.as_str())
     }
 
+    /// Store a Team-managed prompt without changing the active prompt file.
+    /// Activation remains an explicit action in the existing prompt UI.
+    pub fn upsert_inactive(
+        state: &AppState,
+        app: AppType,
+        id: &str,
+        mut prompt: Prompt,
+    ) -> Result<(), AppError> {
+        prompt.id = id.to_owned();
+        prompt.enabled = false;
+        state.db.save_prompt(app.as_str(), &prompt)
+    }
+
     pub fn upsert_prompt(
         state: &AppState,
         app: AppType,
@@ -490,9 +503,11 @@ fn delete_pi_prompt(state: &AppState, id: &str) -> Result<(), AppError> {
 
 #[cfg(test)]
 mod tests {
-    use super::project_prompt_set_to_path;
+    use super::{project_prompt_set_to_path, PromptService};
     use crate::prompt::Prompt;
+    use crate::{database::Database, store::AppState, AppType};
     use indexmap::IndexMap;
+    use std::sync::Arc;
     use tempfile::tempdir;
 
     fn prompt(id: &str, content: &str, enabled: bool) -> Prompt {
@@ -557,6 +572,25 @@ mod tests {
             std::fs::read_to_string(path).expect("read prompt"),
             "first body"
         );
+    }
+
+    #[test]
+    fn team_prompt_is_saved_inactive_without_projecting_to_live_config() {
+        let state = AppState::new(Arc::new(Database::memory().expect("create database")));
+        PromptService::upsert_inactive(
+            &state,
+            AppType::Codex,
+            "nexusops-team-prompt",
+            prompt("ignored-client-id", "team content", true),
+        )
+        .expect("save inactive Team prompt");
+
+        let saved = PromptService::get_prompts(&state, AppType::Codex)
+            .expect("read prompts")
+            .swap_remove("nexusops-team-prompt")
+            .expect("Team prompt exists");
+        assert_eq!(saved.content, "team content");
+        assert!(!saved.enabled);
     }
 }
 

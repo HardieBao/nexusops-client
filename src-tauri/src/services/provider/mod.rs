@@ -490,6 +490,35 @@ mod tests {
 
     #[test]
     #[serial]
+    fn upsert_inactive_keeps_first_provider_unselected() {
+        with_test_home(|state, _| {
+            let provider = Provider::with_id(
+                "nexusops-team-codex".to_string(),
+                "NexusOps Team".to_string(),
+                codex_settings("https://gateway.example/api/v1", "test-key"),
+                None,
+            );
+
+            ProviderService::upsert_inactive(state, AppType::Codex, provider)
+                .expect("save inactive Team provider");
+
+            let saved = state
+                .db
+                .get_provider_by_id("nexusops-team-codex", AppType::Codex.as_str())
+                .expect("query saved provider");
+            assert!(saved.is_some());
+            assert_eq!(
+                state
+                    .db
+                    .get_current_provider(AppType::Codex.as_str())
+                    .expect("query current provider"),
+                None
+            );
+        });
+    }
+
+    #[test]
+    #[serial]
     fn update_preserves_usage_credentials_that_only_match_previous_config() {
         with_test_home(|state, _| {
             let provider = codex_provider_with_usage(
@@ -4352,7 +4381,7 @@ impl ProviderService {
         }
     }
 
-    fn provider_live_config_managed(provider: &Provider) -> Option<bool> {
+    pub(crate) fn provider_live_config_managed(provider: &Provider) -> Option<bool> {
         provider
             .meta
             .as_ref()
@@ -4575,6 +4604,51 @@ impl ProviderService {
         }
 
         Ok(true)
+    }
+
+    /// Create or update a provider without selecting it or writing tool config.
+    ///
+    /// Team imports use this entry point so that importing and activating a
+    /// provider remain two separate user actions. An active provider must go
+    /// through [`Self::update`] because changing it also changes live config.
+    pub fn upsert_inactive(
+        state: &AppState,
+        app_type: AppType,
+        provider: Provider,
+    ) -> Result<bool, AppError> {
+        if app_type == AppType::Pi {
+            return Err(AppError::InvalidInput(
+                "Pi providers cannot be imported by Team".to_string(),
+            ));
+        }
+
+        if state.db.get_current_provider(app_type.as_str())?.as_deref()
+            == Some(provider.id.as_str())
+        {
+            return Err(AppError::Message(
+                "The Team provider is active; preview and confirm the live update first"
+                    .to_string(),
+            ));
+        }
+
+        let provider = Self::prepare_inactive(state, &app_type, provider)?;
+        state.db.save_provider(app_type.as_str(), &provider)?;
+        Ok(true)
+    }
+
+    pub(crate) fn prepare_inactive(
+        state: &AppState,
+        app_type: &AppType,
+        mut provider: Provider,
+    ) -> Result<Provider, AppError> {
+        Self::normalize_provider_if_claude(app_type, &mut provider);
+        Self::validate_provider_settings(app_type, &provider)?;
+        normalize_provider_common_config_for_storage(state.db.as_ref(), app_type, &mut provider)?;
+        Self::normalize_usage_script_credential_overrides(app_type, &mut provider);
+        if app_type.is_additive_mode() {
+            Self::set_provider_live_config_managed(&mut provider, false);
+        }
+        Ok(provider)
     }
 
     /// Update a provider

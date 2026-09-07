@@ -29,6 +29,10 @@ pub mod skill;
 mod stream_check;
 mod subscription;
 mod sync_support;
+#[cfg(feature = "team")]
+mod team;
+#[cfg(not(feature = "team"))]
+mod team_disabled;
 mod xai_oauth;
 
 mod lightweight;
@@ -65,6 +69,10 @@ pub use settings::*;
 pub use skill::*;
 pub use stream_check::*;
 pub use subscription::*;
+#[cfg(feature = "team")]
+pub use team::*;
+#[cfg(not(feature = "team"))]
+pub use team_disabled::*;
 pub use xai_oauth::*;
 
 pub use lightweight::*;

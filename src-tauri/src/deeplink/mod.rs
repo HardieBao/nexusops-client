@@ -1,6 +1,6 @@
-//! Deep link import functionality for CC Switch
+//! Deep link import functionality for NexusOps Client
 //!
-//! This module implements the ccswitch:// protocol for importing configurations
+//! This module implements the nexusops:// protocol for importing configurations
 //! via deep links. Supports importing:
 //! - Provider configurations (Claude/Codex/Gemini)
 //! - MCP server configurations
@@ -24,12 +24,14 @@ use serde::{Deserialize, Serialize};
 pub use mcp::import_mcp_from_deeplink;
 pub use parser::parse_deeplink_url;
 pub use prompt::import_prompt_from_deeplink;
+#[cfg(feature = "team")]
+pub(crate) use provider::build_provider_from_request;
 pub use provider::{import_provider_from_deeplink, parse_and_merge_config};
 pub use skill::import_skill_from_deeplink;
 
 /// Deep link import request model
 ///
-/// Represents a parsed ccswitch:// URL ready for processing.
+/// Represents a parsed nexusops:// URL ready for processing.
 /// This struct contains all possible fields for all resource types.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

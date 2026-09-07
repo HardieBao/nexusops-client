@@ -101,7 +101,7 @@ impl TrayTexts {
         match language {
             "en" => Self {
                 show_main: "Open main window",
-                open_website: "Open Official Website",
+                open_website: "Open NexusOps Client repository",
                 no_providers_label: "(no providers)",
                 lightweight_mode: "Lightweight Mode",
                 quit: "Quit",
@@ -111,7 +111,7 @@ impl TrayTexts {
             },
             "ja" => Self {
                 show_main: "メインウィンドウを開く",
-                open_website: "公式サイトを開く",
+                open_website: "NexusOps Client リポジトリを開く",
                 no_providers_label: "(プロバイダーなし)",
                 lightweight_mode: "軽量モード",
                 quit: "終了",
@@ -121,7 +121,7 @@ impl TrayTexts {
             },
             "zh-TW" => Self {
                 show_main: "開啟主介面",
-                open_website: "開啟官方網站",
+                open_website: "開啟 NexusOps Client 儲存庫",
                 no_providers_label: "(無供應商)",
                 lightweight_mode: "輕量模式",
                 quit: "退出",
@@ -131,7 +131,7 @@ impl TrayTexts {
             },
             _ => Self {
                 show_main: "打开主界面",
-                open_website: "打开官方网站",
+                open_website: "打开 NexusOps Client 仓库",
                 no_providers_label: "(无供应商)",
                 lightweight_mode: "轻量模式",
                 quit: "退出",
@@ -708,7 +708,7 @@ pub fn create_tray_menu(
     let mut section_handles: std::collections::HashMap<AppType, Submenu<tauri::Wry>> =
         std::collections::HashMap::new();
 
-    // 顶部：打开主界面 / 打开官方网站
+    // 顶部：打开主界面 / 打开 NexusOps Client 仓库
     let show_main_item =
         MenuItem::with_id(app, "show_main", tray_texts.show_main, true, None::<&str>)
             .map_err(|e| AppError::Message(format!("创建打开主界面菜单失败: {e}")))?;
@@ -719,7 +719,7 @@ pub fn create_tray_menu(
         true,
         None::<&str>,
     )
-    .map_err(|e| AppError::Message(format!("创建打开官方网站菜单失败: {e}")))?;
+    .map_err(|e| AppError::Message(format!("创建打开项目仓库菜单失败: {e}")))?;
     menu_builder = menu_builder
         .item(&show_main_item)
         .item(&open_website_item)
@@ -1021,8 +1021,11 @@ pub fn handle_tray_menu_event(app: &tauri::AppHandle, event_id: &str) {
             }
         }
         "open_website" => {
-            if let Err(e) = app.opener().open_url("https://ccswitch.io", None::<String>) {
-                log::error!("打开官方网站失败: {e}");
+            if let Err(e) = app.opener().open_url(
+                "https://github.com/HardieBao/nexusops-client",
+                None::<String>,
+            ) {
+                log::error!("打开 NexusOps Client 仓库失败: {e}");
             }
         }
         "lightweight_mode" => {

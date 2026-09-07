@@ -1,0 +1,67 @@
+{
+  "protocol": "nexusops-content-v1",
+  "texts": [
+    {
+      "name": "empty",
+      "input_base64": "",
+      "normalized_base64": "",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "chinese_bom_crlf",
+      "input_base64": "77u/IyDlm6LpmJ/op4TojIMNCiAg5L+d55WZ56m655m9ICANCg==",
+      "normalized_base64": "IyDlm6LpmJ/op4TojIMKICDkv53nlZnnqbrnmb0gIAo=",
+      "sha256": "0f6e3811f1890ce6b5998a50e3168bb8ee52e94c871c77866f736ba1fdb04d1a"
+    },
+    {
+      "name": "lone_cr_no_final_newline",
+      "input_base64": "YQ1iICA=",
+      "normalized_base64": "YQ1iICA=",
+      "sha256": "69fe0850a06be4cbbda32d1ad06cba687789a6518653ffe34d2997384293d4af"
+    },
+    {
+      "name": "one_initial_bom_only",
+      "input_base64": "77u/77u/5q2j5paH77u/",
+      "normalized_base64": "77u/5q2j5paH77u/",
+      "sha256": "2651d49d30e33e3c61e3c7ea658a88427dd7265825bb433637ed4ebbae9cf784"
+    }
+  ],
+  "skill": {
+    "files": [
+      {
+        "path": "资料/&示例.txt",
+        "input_base64": "77u/5Lit5paHICsgJiA9DQrkv53nlZkN",
+        "mode": 420,
+        "normalized_base64": "5Lit5paHICsgJiA9CuS/neeVmQ0="
+      },
+      {
+        "path": "bin/data.bin",
+        "input_base64": "77u/AP8NCg==",
+        "mode": 420,
+        "normalized_base64": "77u/AP8NCg=="
+      },
+      {
+        "path": "run.sh",
+        "input_base64": "IyEvYmluL3NoDQplY2hvIGZpeHR1cmU=",
+        "mode": 493,
+        "normalized_base64": "IyEvYmluL3NoCmVjaG8gZml4dHVyZQ=="
+      },
+      {
+        "path": "SKILL.md",
+        "input_base64": "77u/LS0tDQpuYW1lOiBwcm90b2NvbC1maXh0dXJlDQotLS0NCiMg5rWL6K+VDQo=",
+        "mode": 420,
+        "normalized_base64": "LS0tCm5hbWU6IHByb3RvY29sLWZpeHR1cmUKLS0tCiMg5rWL6K+VCg=="
+      },
+      {
+        "path": ".hidden.txt",
+        "input_base64": "aGlkZGVuDQo=",
+        "mode": 420,
+        "normalized_base64": "aGlkZGVuCg=="
+      }
+    ],
+    "canonical_manifest": "[{\"path\":\".hidden.txt\",\"sha256\":\"e084a3683ef795d1cdbf5e9b253f2ca1f783ae0d0d6e47e419acbbc4fc80bbfa\",\"size\":7,\"executable\":false},{\"path\":\"SKILL.md\",\"sha256\":\"285678ef68a4b73f12c23270b4470dc7e0a5af13952c21ac18fa2351cc1e0070\",\"size\":40,\"executable\":false},{\"path\":\"bin/data.bin\",\"sha256\":\"358b9943befb169e036abe41eefe87bf06b8dd5002f8cbac80110688007e4920\",\"size\":7,\"executable\":false},{\"path\":\"run.sh\",\"sha256\":\"6be296fefdf06d45860b7b347ce12b864718956704be0b6de631eaf59542787c\",\"size\":22,\"executable\":true},{\"path\":\"资料/&示例.txt\",\"sha256\":\"7294d764a2618c8039497b21b63f0f8a8422466a19441646fa6f930747b81e92\",\"size\":20,\"executable\":false}]",
+    "content_hash": "95d6d57ccf1c1513796b355daefb6cd8df35c82d7fb5e4c29bc94ec118dde352",
+    "input_archive": "skill-input.tar.gz",
+    "input_archive_sha256": "7fef5968394a97bfad8506a8edb2a211774fb7623cafe53596ebb15a027243e6"
+  }
+}
