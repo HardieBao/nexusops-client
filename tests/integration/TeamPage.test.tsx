@@ -311,4 +311,142 @@ describe("TeamPage", () => {
       ]),
     );
   });
+
+  it("shows every sync outcome, support mode, and a retained withdrawn file", async () => {
+    const outcomes = [
+      "installed",
+      "downloaded",
+      "imported_inactive",
+      "unchanged",
+      "skipped",
+      "conflict",
+      "failed",
+    ] as const;
+    const assets = outcomes.map((outcome, index) => ({
+      asset_id: index + 1,
+      kind: (index === 0 ? "skill" : index === 2 ? "prompt" : "rule") as
+        | "skill"
+        | "prompt"
+        | "rule",
+      slug: `asset-${outcome}`,
+      name: `Asset ${outcome}`,
+      revision: 2,
+      content_hash: "a".repeat(64),
+      archive_sha256: index === 0 ? "b".repeat(64) : null,
+      download_url: `/api/v1/assets/${index + 1}/revisions/2/download`,
+      content_type:
+        index === 0 ? "application/gzip" : "text/markdown; charset=utf-8",
+      byte_size: 12,
+      files: [],
+    }));
+    const planItems = assets.map((asset, index) => ({
+      asset,
+      drift: "same" as const,
+      support: (["tool_skill", "managed_download", "inactive_prompt"] as const)[
+        index % 3
+      ],
+      install_path: `C:/fixture/${asset.slug}`,
+      previous_revision: 2,
+      subscribed: true,
+      has_backup: false,
+      last_synced_at: "2026-09-07T00:00:00Z",
+      decision_token: `decision-${asset.asset_id}`,
+      disk_fingerprint: `disk-${asset.asset_id}`,
+      upstream_fingerprint: null,
+      inspection_error_code: null,
+      inspection_error_message: null,
+    }));
+    api.getTeamStatus.mockResolvedValue(connection);
+    api.previewTeamSync.mockResolvedValue({
+      connection,
+      conflicts: [],
+      items: planItems,
+      withdrawn: [
+        {
+          asset_id: 99,
+          name: "Withdrawn but retained",
+          kind: "rule",
+          revision: 1,
+          last_synced_at: "2026-09-07T00:00:00Z",
+          has_backup: true,
+          local_file_present: true,
+          recovery_error: null,
+        },
+      ],
+      last_successful_sync: "2026-09-07T00:00:00Z",
+    });
+    api.syncTeam.mockResolvedValue({
+      connection,
+      conflicts: [],
+      items: outcomes.map((outcome, index) => ({
+        asset_id: index + 1,
+        revision: 2,
+        outcome,
+        drift: "same" as const,
+        install_path: `C:/fixture/asset-${outcome}`,
+        backup_path: null,
+        error_code: outcome === "failed" ? "io" : null,
+        error_message: outcome === "failed" ? "synthetic failure" : null,
+      })),
+      last_successful_sync: "2026-09-07T00:01:00Z",
+    });
+
+    render(<TeamPage />);
+    await screen.findByText("Withdrawn but retained");
+    for (const support of [
+      "tool_skill",
+      "managed_download",
+      "inactive_prompt",
+    ]) {
+      expect(
+        screen.getAllByText(`team.assets.support.${support}`).length,
+      ).toBeGreaterThan(0);
+    }
+    expect(
+      screen.getByText("team.assets.withdrawnPresent"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "team.assets.sync" }));
+    for (const outcome of outcomes) {
+      expect(
+        await screen.findByText(`team.assets.outcome.${outcome}`),
+      ).toBeInTheDocument();
+    }
+  });
+
+  it("keeps retained local history visible for every remote access failure", async () => {
+    api.getTeamLocalHistory.mockResolvedValue([
+      {
+        asset_id: 88,
+        name: "Retained local asset",
+        kind: "rule",
+        revision: 4,
+        last_synced_at: "2026-09-07T00:00:00Z",
+        has_backup: true,
+        local_file_present: true,
+        recovery_error: null,
+      },
+    ]);
+
+    for (const code of [
+      "authentication_required",
+      "access_denied",
+      "conflict",
+      "unavailable",
+    ]) {
+      api.getTeamStatus.mockResolvedValue(connection);
+      api.previewTeamSync.mockRejectedValue({
+        code,
+        message: `synthetic ${code}`,
+      });
+      const view = render(<TeamPage />);
+
+      expect(
+        await screen.findByText("Retained local asset"),
+      ).toBeInTheDocument();
+      expect(await screen.findByText(`synthetic ${code}`)).toBeInTheDocument();
+
+      view.unmount();
+    }
+  });
 });
