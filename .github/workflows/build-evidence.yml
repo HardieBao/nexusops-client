@@ -5,15 +5,15 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'src/**'
-      - 'src-tauri/**'
-      - 'tests/**'
-      - 'package.json'
-      - 'pnpm-lock.yaml'
-      - 'pnpm-workspace.yaml'
-      - 'rust-toolchain.toml'
-      - 'scripts/*.mjs'
-      - '.github/workflows/**'
+      - "src/**"
+      - "src-tauri/**"
+      - "tests/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - "rust-toolchain.toml"
+      - "scripts/*.mjs"
+      - ".github/workflows/**"
 
 permissions:
   contents: read
@@ -64,23 +64,25 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: '.node-version'
+          node-version-file: ".node-version"
 
       - name: Setup pnpm
-        env:
-          COREPACK_ENABLE_DOWNLOAD_PROMPT: '0'
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10.12.3"
+          run_install: false
+
+      - name: Verify Node.js and pnpm
         shell: bash
         run: |
           set -euo pipefail
-          corepack enable
-          corepack install
           node --version
           pnpm --version
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: '1.95'
+          toolchain: "1.95"
           components: rustfmt, clippy
 
       - name: Install Linux system dependencies

@@ -827,3 +827,15 @@ test("promotion calls the reusable R2 sync and macOS assets stay universal", () 
     /tar -xzf[\s\S]*UPDATER_APP[\s\S]*lipo -verify_arch/,
   );
 });
+
+test("workflows install the pinned pnpm without Corepack key lookup", () => {
+  for (const workflow of ["ci.yml", "build-evidence.yml", "release.yml"]) {
+    const source = readFileSync(
+      join(rootPath, ".github/workflows", workflow),
+      "utf8",
+    );
+    assert.match(source, /uses: pnpm\/action-setup@v4/);
+    assert.match(source, /version: ["']10\.12\.3["']/);
+    assert.doesNotMatch(source, /corepack (?:enable|install)/);
+  }
+});
