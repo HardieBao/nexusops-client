@@ -11,27 +11,31 @@ A named maintainer with Rust/Tauri review responsibility must be assigned before
 
 ## Current upstream check
 
-On 2026-09-07, `git fetch upstream --tags --prune` found no release tag newer than `v3.20.1`. `upstream/main` resolved to `38cfafdc199604b132be5eafe3f5384d85124a81`, 32 commits after the fork baseline. Because this fork's Team implementation was still uncommitted during the check, a real rebase of the complete fork could not be performed without creating a misleading or incomplete maintenance result. This check is useful freshness evidence, not G3 rebase evidence.
+On 2026-09-07, `git fetch upstream --tags --prune` found no release tag newer than `v3.20.1`. The complete committed NexusOps fork was rebased onto the then-current untagged `upstream/main`, 38 commits after the release baseline. This exercises the maintenance process against newer source, but it does not label an unreleased upstream commit as a compatible CC Switch release.
 
-The first complete maintenance drill must use a committed NexusOps feature branch and record the old fork commit, new upstream commit, merge base, conflict list, resolutions, elapsed time, and every check below. Until that drill passes, upstream compatibility and G3 remain open.
-
-### Limited release-pipeline rebase drill
-
-The independently committed release-pipeline slice was rebased on 2026-09-07 to exercise the mechanics without touching the in-progress Team implementation:
+### Complete-fork rebase drill
 
 | Field | Result |
 | --- | --- |
-| Local branch | `codex/upstream-release-drill-20260907` |
-| Source commit before rebase | `e874ad35` on baseline `3217f725` |
-| Target | untagged `upstream/main` at `38cfafdc199604b132be5eafe3f5384d85124a81` |
-| Rebased commit | `63827b91ece88e4b503e3e46bbd7855d2695cbfd` |
+| Local branch | `codex/team-ai-control-plane` |
+| Source commit before rebase | `53b46a11d99af31d33f8b7d378eba788812b4db7` on baseline `3217f72596f2d1c0f879f0a05f83803825d9809f` |
+| Target | untagged `upstream/main` at `9692ff5e22327f0d2340d24271cf897f9d64fafd` |
+| Merge base | `3217f72596f2d1c0f879f0a05f83803825d9809f` |
+| Rebased feature commit | `cabd451605b26f53de923a014450750e60fa1808` |
+| Verified code and package commit | `906af09f92bc4358d1b5f2d8c24a18517f8b8596` |
 | Command | `git rebase upstream/main` in a separate worktree |
-| Conflicts | None |
-| Rebase duration | 1.13 seconds |
-| Checks | actionlint 1.7.12 passed all three changed workflows; Node syntax passed; updater-manifest and build-evidence fixture tests passed |
+| Conflicts | `README.md`, `README_ZH.md` |
+| Resolution | Kept NexusOps product, support, protocol and release-readiness copy; upstream CC Switch sponsorship and signed-release claims do not apply to the fork |
+| Rebase timing | Automatic phase stopped on the two conflicts after 7.26 seconds; manual resolution time was not separately timed |
+| Frontend checks | Frozen install, typecheck, format, renderer build, 137 files / 1094 tests passed |
+| Rust checks | Team 47 passed / 3 ignored; full suite 2956 passed / 9 ignored with three exact Windows symlink-privilege filters; Team-on and Team-off checks passed |
+| Release checks | Node release tests 9 / 9, actionlint 1.7.12, updater signature verification, Windows MSI and NSIS build passed |
+| Windows smoke | Final release binary reconnected to the isolated Gateway and repeated a seven-asset no-change sync; an earlier MSI candidate installed and uninstalled per-user with isolated state |
 | Decision | Preview only |
 
-The release identity fixture was intentionally not run on the rebased slice because that isolated branch does not contain the uncommitted NexusOps package and Tauri identity changes. No Rust, renderer, provider, asset, installation, or updater runtime claim follows from this drill. A complete-fork drill remains required after the Team work is committed.
+The rebase exposed and closed four compatibility gaps: Vitest had collected a Node-native release test, new upstream integration tests still targeted `.cc-switch`, `actions/stale@v10` received a removed input, and two app integration tests used a timeout too short under the full parallel suite. The release build also exposed mismatched Tauri JavaScript packages and an old CLI that could not patch the bundle-type marker with stripped symbols; the fork now pins compatible 2.10-line packages and Tauri CLI 2.10.0.
+
+G3 remains blocked by the missing human maintainer and reviewer, platform signing, macOS/Linux/ARM installation evidence, and the two-version updater exercise. A tagged upstream release after `v3.20.1` still requires a fresh compatibility decision.
 
 ## Monthly check
 

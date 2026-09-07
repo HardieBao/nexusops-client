@@ -25,11 +25,13 @@ The current build matrix produces these candidates:
 - Node.js: `.node-version`, currently `22.12.0`.
 - pnpm: the `packageManager` field, currently `10.12.3`; install with `pnpm install --frozen-lockfile`.
 - Rust: `rust-toolchain.toml`, currently `1.95` with `rustfmt` and `clippy`.
-- Tauri CLI and plugins: resolved by `pnpm-lock.yaml` and `src-tauri/Cargo.lock`.
+- Tauri CLI: exact `2.10.0`; the core JavaScript API stays on the compatible 2.10 line, and each JavaScript plugin matches its Rust plugin minor version. All are resolved by `pnpm-lock.yaml` and `src-tauri/Cargo.lock`.
 - Release runners: `windows-2022`, `windows-11-arm`, `macos-14`, `ubuntu-22.04`, and `ubuntu-22.04-arm`.
 - Platform dependencies: each release candidate includes a hashed toolchain record with the hosted image version, Cargo, OS details, Xcode/Clang on macOS, Visual Studio/Windows SDK discovery on Windows, and resolved GTK/WebKit/libsoup packages on Linux.
 
 This is an operationally repeatable build, not a bit-for-bit reproducible-build claim. Hosted runner images, Apple notarization, MSI metadata, archive timestamps, and native package tooling may change output bytes. Compare provenance first; investigate unexpected hash differences instead of assuming compromise or equivalence.
+
+The release profile strips symbols. Tauri CLI versions before 2.10 can fail to patch the bundle-type marker in a stripped binary, which can break updater package detection. The pinned CLI includes the upstream fix described in [tauri-apps/tauri#14186](https://github.com/tauri-apps/tauri/issues/14186). Treat any `__TAURI_BUNDLE_TYPE variable not found` warning as a failed release build.
 
 ## Required release credentials
 
