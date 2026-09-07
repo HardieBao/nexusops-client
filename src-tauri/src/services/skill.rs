@@ -6872,8 +6872,11 @@ mod tests {
             .join("test-skill");
         fs::create_dir_all(pi_skill.parent().expect("Pi skills directory"))
             .expect("create Pi skills directory");
-        std::os::unix::fs::symlink(Path::new("../../.cc-switch/skills/test-skill"), &pi_skill)
-            .expect("create relative Pi symlink");
+        std::os::unix::fs::symlink(
+            Path::new("../../.nexusops-client/skills/test-skill"),
+            &pi_skill,
+        )
+        .expect("create relative Pi symlink");
 
         let result = SkillService::migrate_storage(&db, SkillStorageLocation::Unified)
             .expect("migrate storage");
