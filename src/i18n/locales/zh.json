@@ -3352,6 +3352,8 @@
       },
       "localRetention": "退出团队或服务端撤权不会删除已经下载的本地文件；它们会停止同步并保留在本机。",
       "localHistoryTitle": "本地恢复",
+      "localFilePresent": "本地文件存在",
+      "localFileMissing": "本地文件缺失",
       "localHistoryHint": "即使 Gateway 离线或成员 Key 需要更新，这些文件和备份仍可在本机恢复。"
     },
     "errors": {

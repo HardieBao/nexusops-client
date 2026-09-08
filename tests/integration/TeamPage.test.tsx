@@ -449,6 +449,44 @@ describe("TeamPage", () => {
     document.documentElement.classList.remove("dark");
   });
 
+  it.each([true, false])(
+    "describes local file presence (%s) without claiming access was revoked",
+    async (present) => {
+      api.getTeamStatus.mockResolvedValue(connection);
+      api.previewTeamSync.mockRejectedValue({
+        code: "unavailable",
+        message: "gateway offline",
+      });
+      api.getTeamLocalHistory.mockResolvedValue([
+        {
+          asset_id: 31,
+          name: "Local rule",
+          kind: "rule",
+          revision: 2,
+          last_synced_at: null,
+          has_backup: false,
+          local_file_present: present,
+          recovery_error: null,
+        },
+      ]);
+      render(<TeamPage />);
+      await screen.findByText("Local rule");
+      expect(
+        screen.getByText(
+          present
+            ? "team.assets.localFilePresent"
+            : "team.assets.localFileMissing",
+        ),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText("team.assets.withdrawnPresent"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByText("team.assets.withdrawnMissing"),
+      ).not.toBeInTheDocument();
+    },
+  );
+
   it("restores an offline local backup once and reports refresh separately", async () => {
     api.getTeamStatus.mockResolvedValue(connection);
     api.previewTeamSync.mockRejectedValue({

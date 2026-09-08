@@ -3350,6 +3350,8 @@
       },
       "localRetention": "退出團隊或伺服器撤權不會刪除已下載的本機檔案；檔案會保留並停止同步。",
       "localHistoryTitle": "本機復原",
+      "localFilePresent": "本機檔案存在",
+      "localFileMissing": "本機檔案遺失",
       "localHistoryHint": "即使 Gateway 離線或成員 Key 需要更新，這些檔案與備份仍可在本機還原。"
     },
     "errors": {

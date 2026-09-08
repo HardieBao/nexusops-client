@@ -3352,6 +3352,8 @@
       },
       "localRetention": "Disconnecting or losing server access does not delete downloaded files. They remain on this device and stop syncing.",
       "localHistoryTitle": "Local recovery",
+      "localFilePresent": "Local file present",
+      "localFileMissing": "Local file missing",
       "localHistoryHint": "These files and backups remain available even while the Gateway is offline or the member key needs renewal."
     },
     "errors": {

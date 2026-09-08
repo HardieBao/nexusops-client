@@ -3349,6 +3349,8 @@
       },
       "localRetention": "切断またはサーバーでの権限取り消し時も、ダウンロード済みファイルは削除されず、この端末に残って同期を停止します。",
       "localHistoryTitle": "ローカル復旧",
+      "localFilePresent": "ローカルファイルあり",
+      "localFileMissing": "ローカルファイルなし",
       "localHistoryHint": "Gateway がオフライン、またはメンバー Key の更新が必要な間も、これらのファイルとバックアップを復元できます。"
     },
     "errors": {

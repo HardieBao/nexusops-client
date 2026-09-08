@@ -1287,8 +1287,8 @@ export function TeamPage() {
                           )}
                           <Badge variant="outline">
                             {asset.local_file_present
-                              ? t("team.assets.withdrawnPresent")
-                              : t("team.assets.withdrawnMissing")}
+                              ? t("team.assets.localFilePresent")
+                              : t("team.assets.localFileMissing")}
                           </Badge>
                         </div>
                       </article>
