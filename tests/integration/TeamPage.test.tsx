@@ -1,4 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -301,6 +307,110 @@ describe("TeamPage", () => {
     expect(screen.getByLabelText("team.connect.key")).toHaveValue(secret);
     expect(api.connectTeam).not.toHaveBeenCalled();
   });
+
+  it.each(['{"member_key":"nx_sensitive_fixture", nope}', "null"])(
+    "reports invalid Profile content without exposing parser details: %s",
+    async (content) => {
+      render(<TeamPage />);
+      const input = await screen.findByLabelText("team.connect.profileFile");
+      fireEvent.change(input, {
+        target: { files: [new File([content], "profile.json")] },
+      });
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent("team.errors.invalid_profile_file");
+      expect(alert).not.toHaveTextContent("nx_sensitive_fixture");
+      expect(alert).not.toHaveTextContent(/SyntaxError|Unexpected|Cannot read/);
+      expect(screen.getByLabelText("team.connect.key")).toHaveValue("");
+      expect(screen.getByLabelText("team.connect.gateway")).toHaveValue("");
+      expect(api.connectTeam).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(["load", "error"])(
+    "blocks old credentials during Profile reading and ignores a superseded %s",
+    async (event) => {
+      const readers: FileReader[] = [];
+      const read = vi
+        .spyOn(FileReader.prototype, "readAsText")
+        .mockImplementation(function (this: FileReader) {
+          readers.push(this);
+        });
+      try {
+        render(<TeamPage />);
+        const input = await screen.findByLabelText("team.connect.profileFile");
+        fireEvent.change(screen.getByLabelText("team.connect.gateway"), {
+          target: { value: "https://old.example" },
+        });
+        fireEvent.change(screen.getByLabelText("team.connect.key"), {
+          target: { value: "nx_old_fixture" },
+        });
+        const choose = () =>
+          fireEvent.change(input, {
+            target: { files: [new File(["{}"], "profile.json")] },
+          });
+        choose();
+        expect(
+          screen.getByRole("button", { name: "team.connect.submit" }),
+        ).toBeDisabled();
+        expect(screen.getByLabelText("team.connect.key")).toHaveValue("");
+        expect(screen.getByLabelText("team.connect.gateway")).toBeDisabled();
+        // Simulate two native selections queued before the disabled input rerenders.
+        choose();
+        act(() => {
+          Object.defineProperty(readers[1], "result", {
+            value: JSON.stringify({
+              schema_version: 1,
+              gateway_url: "https://latest.example",
+              member_key: "nx_latest_fixture",
+            }),
+          });
+          readers[1].dispatchEvent(new ProgressEvent("load"));
+        });
+        await waitFor(() =>
+          expect(screen.getByLabelText("team.connect.key")).toHaveValue(
+            "nx_latest_fixture",
+          ),
+        );
+        act(() => {
+          if (event === "error") {
+            Object.defineProperty(readers[0], "error", {
+              value: new DOMException("nx_old_fixture read failure"),
+            });
+          } else {
+            Object.defineProperty(readers[0], "result", {
+              value: JSON.stringify({
+                schema_version: 1,
+                gateway_url: "https://old.example",
+                member_key: "nx_old_fixture",
+              }),
+            });
+          }
+          readers[0].dispatchEvent(new ProgressEvent(event));
+        });
+        await act(async () => {});
+        expect(screen.getByLabelText("team.connect.gateway")).toHaveValue(
+          "https://latest.example",
+        );
+        expect(screen.getByLabelText("team.connect.key")).toHaveValue(
+          "nx_latest_fixture",
+        );
+        expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+        expect(api.connectTeam).not.toHaveBeenCalled();
+        fireEvent.click(
+          screen.getByRole("button", { name: "team.connect.submit" }),
+        );
+        await waitFor(() =>
+          expect(api.connectTeam).toHaveBeenCalledWith(
+            "https://latest.example",
+            "nx_latest_fixture",
+          ),
+        );
+        await screen.findByText("Developer key ····safe");
+      } finally {
+        read.mockRestore();
+      }
+    },
+  );
 
   it("shows only safe key metadata after restoring a connection", async () => {
     api.getTeamStatus.mockResolvedValue(connection);

@@ -53,6 +53,7 @@ const PROVIDER_APPS = ["claude", "codex", "gemini", "grokbuild", "opencode"];
 const NO_MODEL = "__gateway_default__";
 
 type BusyAction =
+  | "profile"
   | "connect"
   | "refresh"
   | "disconnect"
@@ -226,6 +227,7 @@ export function TeamPage() {
       });
     return () => {
       active = false;
+      requestRevision.current += 1;
       void cancelTeamOperation();
     };
   }, []);
@@ -264,7 +266,7 @@ export function TeamPage() {
 
   const handleConnect = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!gateway.trim() || !memberKey.trim()) return;
+    if (busy !== null || !gateway.trim() || !memberKey.trim()) return;
     const revision = ++requestRevision.current;
     setBusy("connect");
     setError(null);
@@ -298,15 +300,19 @@ export function TeamPage() {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) return;
+    const revision = ++requestRevision.current;
+    setBusy("profile");
     setError(null);
     setImportedProfileName(null);
+    setGateway("");
+    setMemberKey("");
     try {
       if (file.size > 1_048_576) throw new Error("Team Profile exceeds 1 MiB");
-      const value = JSON.parse(await readTextFile(file)) as Record<
-        string,
-        unknown
-      >;
+      const text = await readTextFile(file);
+      if (revision !== requestRevision.current) return;
+      const value = JSON.parse(text) as Record<string, unknown> | null;
       if (
+        !value ||
         value.schema_version !== 1 ||
         typeof value.gateway_url !== "string" ||
         typeof value.member_key !== "string" ||
@@ -322,13 +328,15 @@ export function TeamPage() {
           ? value.name.trim()
           : t("team.connect.importedProfile"),
       );
-    } catch (reason) {
-      setGateway("");
-      setMemberKey("");
+    } catch {
+      if (revision !== requestRevision.current) return;
+      // JSON parse errors may contain fragments of the credential-bearing file.
       setError({
         code: "invalid_profile_file",
-        message: reason instanceof Error ? reason.message : String(reason),
+        message: t("team.errors.invalid_profile_file"),
       });
+    } finally {
+      if (revision === requestRevision.current) setBusy(null);
     }
   };
 
