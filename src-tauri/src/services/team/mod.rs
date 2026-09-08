@@ -21,6 +21,7 @@ pub struct TeamService {
     pub state: TeamState,
     credentials: Arc<dyn CredentialStore>,
     operation: tokio::sync::Mutex<()>,
+    provider_review_secret: std::sync::Mutex<uuid::Uuid>,
     pub(crate) sync_operation: tokio::sync::Mutex<()>,
 }
 
@@ -39,6 +40,7 @@ impl TeamService {
             state,
             credentials,
             operation: tokio::sync::Mutex::new(()),
+            provider_review_secret: std::sync::Mutex::new(uuid::Uuid::new_v4()),
             sync_operation: tokio::sync::Mutex::new(()),
         })
     }
@@ -112,6 +114,10 @@ impl TeamService {
             }
             return Err(error);
         }
+        *self
+            .provider_review_secret
+            .lock()
+            .map_err(|_| TeamError::Storage)? = uuid::Uuid::new_v4();
         Ok(connection)
     }
 
@@ -226,6 +232,10 @@ impl TeamService {
         if let Some(connection) = self.state.connection()? {
             self.credentials.delete(&connection.id)?;
             self.state.disconnect(&connection.id)?;
+            *self
+                .provider_review_secret
+                .lock()
+                .map_err(|_| TeamError::Storage)? = uuid::Uuid::new_v4();
         }
         Ok(())
     }

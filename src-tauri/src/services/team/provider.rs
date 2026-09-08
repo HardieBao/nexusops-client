@@ -1,6 +1,9 @@
 use std::str::FromStr;
 
+use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+use hmac::{Hmac, Mac};
 use serde::{Deserialize, Serialize};
+use sha2::Sha256;
 
 use crate::{
     deeplink::{build_provider_from_request, DeepLinkImportRequest},
@@ -36,6 +39,7 @@ pub struct ProviderPreview {
     pub active: bool,
     pub change: ProviderChange,
     pub changed_fields: Vec<String>,
+    pub decision_token: String,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -50,6 +54,8 @@ pub enum TeamProviderError {
     ProviderCollision,
     #[error("review and confirm the Team provider changes before applying them")]
     ConfirmationRequired,
+    #[error("the Team provider changed after preview; review it again")]
+    PreviewStale,
     #[error("switch away from the active Team provider before updating it")]
     ActiveProviderUpdate,
     #[error("the Team provider link is missing")]
@@ -76,6 +82,7 @@ impl TeamProviderError {
             Self::UnauthorizedModel => "unauthorized_model",
             Self::ProviderCollision => "provider_collision",
             Self::ConfirmationRequired => "confirmation_required",
+            Self::PreviewStale => "provider_preview_stale",
             Self::ActiveProviderUpdate => "active_provider_update",
             Self::MissingLink => "missing_provider_link",
             Self::InvalidLink => "invalid_provider_link",
@@ -99,7 +106,22 @@ pub fn preview_provider(
     preview_for(&connection, team, state, &app_type, model, &desired)
 }
 
-pub fn apply_provider(
+pub fn apply_reviewed_provider(
+    team: &TeamService,
+    state: &AppState,
+    app: &str,
+    model: Option<&str>,
+    confirm_update: bool,
+    decision_token: Option<&str>,
+) -> Result<ProviderPreview, TeamProviderError> {
+    let current = preview_provider(team, state, app, model)?;
+    if decision_token != Some(current.decision_token.as_str()) {
+        return Err(TeamProviderError::PreviewStale);
+    }
+    apply_provider(team, state, app, model, confirm_update)
+}
+
+fn apply_provider(
     team: &TeamService,
     state: &AppState,
     app: &str,
@@ -137,6 +159,8 @@ pub fn apply_provider(
     }
     let current = state.db.get_current_provider(app_type.as_str())?;
     let active = current.as_deref() == Some(provider_to_save.id.as_str())
+        || crate::settings::get_current_provider(&app_type).as_deref()
+            == Some(provider_to_save.id.as_str())
         || (app_type.is_additive_mode()
             && existing.as_ref().is_some_and(|provider| {
                 ProviderService::provider_live_config_managed(provider) == Some(true)
@@ -167,7 +191,29 @@ pub fn apply_provider(
     preview_provider(team, state, app_type.as_str(), model)
 }
 
-pub fn activate_provider(
+pub fn activate_reviewed_provider(
+    team: &TeamService,
+    state: &AppState,
+    app: &str,
+    decision_token: Option<&str>,
+) -> Result<(), TeamProviderError> {
+    let connection = connected_team(team)?;
+    let link = team
+        .state
+        .provider_links(&connection.id)?
+        .into_iter()
+        .find(|link| link.app == app)
+        .ok_or(TeamProviderError::MissingLink)?;
+    let current = preview_provider(team, state, app, link.managed_model.as_deref())?;
+    if current.change != ProviderChange::Unchanged
+        || decision_token != Some(current.decision_token.as_str())
+    {
+        return Err(TeamProviderError::PreviewStale);
+    }
+    activate_provider(team, state, app)
+}
+
+fn activate_provider(
     team: &TeamService,
     state: &AppState,
     app: &str,
@@ -327,12 +373,39 @@ fn preview_for(
         (None, Some(_), _) => unreachable!("collision returned above"),
     };
     let current = state.db.get_current_provider(app_type.as_str())?;
+    let local_current = crate::settings::get_current_provider(app_type);
     let active = existing.as_ref().is_some_and(|provider| {
         current.as_deref() == Some(provider.id.as_str())
+            || local_current.as_deref() == Some(provider.id.as_str())
             || (app_type.is_additive_mode()
                 && ProviderService::provider_live_config_managed(provider) == Some(true))
     });
 
+    // Bind confirmation to both the intended configuration and the local state.
+    // The per-connection in-memory MAC key prevents the token from exposing a
+    // reusable credential digest, and invalidates previews across reconnects.
+    let secret = team
+        .provider_review_secret
+        .lock()
+        .map_err(|_| TeamError::Storage)?;
+    let mut mac =
+        Hmac::<Sha256>::new_from_slice(secret.as_bytes()).map_err(|_| TeamError::Storage)?;
+    let mut snapshot = serde_json::to_value((
+        &connection.id,
+        &connection.profile,
+        app_type.as_str(),
+        model,
+        &link,
+        &existing,
+        desired,
+        &current,
+        &local_current,
+    ))
+    .map_err(|_| TeamError::Storage)?;
+    // Provider metadata contains HashMaps whose iteration order changes on reload.
+    snapshot.sort_all_objects();
+    mac.update(&serde_json::to_vec(&snapshot).map_err(|_| TeamError::Storage)?);
+    let decision_token = URL_SAFE_NO_PAD.encode(mac.finalize().into_bytes());
     Ok(ProviderPreview {
         app: app_type.as_str().to_owned(),
         provider_id: provider_id.to_owned(),
@@ -348,6 +421,7 @@ fn preview_for(
         active,
         change,
         changed_fields,
+        decision_token,
     })
 }
 
@@ -932,13 +1006,34 @@ mod tests {
             let state = AppState::new(Arc::new(Database::memory().unwrap()));
             let cancel = super::super::api::Cancellation::default();
             team.connect(gateway, key, &cancel).await.unwrap();
+            team.refresh(&cancel).await.unwrap();
             let preview = preview_provider(&team, &state, app.as_str(), Some(model)).unwrap();
             assert_eq!(preview.change, ProviderChange::Create);
             assert!(preview.authorized_models.iter().any(|id| id == model));
-            let imported = apply_provider(&team, &state, app.as_str(), Some(model), false).unwrap();
+            team.refresh(&cancel).await.unwrap();
+            let imported = apply_reviewed_provider(
+                &team,
+                &state,
+                app.as_str(),
+                Some(model),
+                false,
+                Some(&preview.decision_token),
+            )
+            .unwrap();
             assert!(!imported.active);
-            apply_provider(&team, &state, app.as_str(), Some(model), false).unwrap();
-            activate_provider(&team, &state, app.as_str()).unwrap();
+            team.refresh(&cancel).await.unwrap();
+            let repeated = apply_reviewed_provider(
+                &team,
+                &state,
+                app.as_str(),
+                Some(model),
+                false,
+                Some(&imported.decision_token),
+            )
+            .unwrap();
+            team.refresh(&cancel).await.unwrap();
+            activate_reviewed_provider(&team, &state, app.as_str(), Some(&repeated.decision_token))
+                .unwrap();
             assert!(
                 preview_provider(&team, &state, app.as_str(), Some(model))
                     .unwrap()
@@ -999,10 +1094,160 @@ mod tests {
             active: false,
             change: ProviderChange::Create,
             changed_fields: vec![],
+            decision_token: "opaque-review-fixture".into(),
         };
         let json = serde_json::to_string(&preview).unwrap();
         assert!(!json.contains("nx_private_fixture"));
         assert!(!json.contains("api_key"));
+    }
+
+    #[test]
+    #[serial]
+    fn review_rejects_credentials_changed_after_preview() {
+        let root = tempfile::tempdir().unwrap();
+        std::env::set_var("NEXUSOPS_CLIENT_TEST_HOME", root.path());
+        crate::settings::reload_settings().unwrap();
+        let credentials = Arc::new(MemoryCredentialStore::default());
+        let team =
+            TeamService::with_credentials(&root.path().join("team"), credentials.clone()).unwrap();
+        let mut connection = connection();
+        connection.id =
+            super::super::connection_id(&connection.gateway_url, &connection.profile).unwrap();
+        team.state.save_connection(&connection).unwrap();
+        credentials
+            .set(&connection.id, "nx_original_review_fixture")
+            .unwrap();
+        let state = AppState::new(Arc::new(Database::memory().unwrap()));
+        assert!(matches!(
+            apply_reviewed_provider(&team, &state, "codex", Some("approved-model"), false, None),
+            Err(TeamProviderError::PreviewStale)
+        ));
+        assert!(team
+            .state
+            .provider_links(&connection.id)
+            .unwrap()
+            .is_empty());
+        apply_provider(&team, &state, "codex", Some("approved-model"), false).unwrap();
+        credentials
+            .set(&connection.id, "nx_preview_review_fixture")
+            .unwrap();
+        let reviewed = preview_provider(&team, &state, "codex", Some("approved-model")).unwrap();
+        credentials
+            .set(&connection.id, "nx_changed_after_review_fixture")
+            .unwrap();
+        let result = apply_reviewed_provider(
+            &team,
+            &state,
+            "codex",
+            Some("approved-model"),
+            true,
+            Some(&reviewed.decision_token),
+        );
+        assert!(
+            matches!(result, Err(TeamProviderError::PreviewStale)),
+            "an old confirmation must not apply a newly rotated credential"
+        );
+        let current = preview_provider(&team, &state, "codex", Some("approved-model")).unwrap();
+        let reopened =
+            TeamService::with_credentials(&root.path().join("team"), credentials.clone()).unwrap();
+        assert!(matches!(
+            apply_reviewed_provider(
+                &reopened,
+                &state,
+                "codex",
+                Some("approved-model"),
+                true,
+                Some(&current.decision_token)
+            ),
+            Err(TeamProviderError::PreviewStale)
+        ));
+        let imported = apply_reviewed_provider(
+            &team,
+            &state,
+            "codex",
+            Some("approved-model"),
+            true,
+            Some(&current.decision_token),
+        )
+        .unwrap();
+        assert_eq!(imported.change, ProviderChange::Unchanged);
+        assert!(!serde_json::to_string(&imported)
+            .unwrap()
+            .contains("nx_changed_after_review_fixture"));
+        let mut edited = state
+            .db
+            .get_provider_by_id(&imported.provider_id, "codex")
+            .unwrap()
+            .unwrap();
+        edited.notes = Some("Personal note edited after preview".into());
+        edited.meta = Some(
+            serde_json::from_value(serde_json::json!({
+                "custom_endpoints": {
+                    "https://a.example": {"url": "https://a.example", "addedAt": 1},
+                    "https://b.example": {"url": "https://b.example", "addedAt": 2},
+                    "https://c.example": {"url": "https://c.example", "addedAt": 3}
+                }
+            }))
+            .unwrap(),
+        );
+        state.db.save_provider("codex", &edited).unwrap();
+        assert!(matches!(
+            activate_reviewed_provider(&team, &state, "codex", Some(&imported.decision_token)),
+            Err(TeamProviderError::PreviewStale)
+        ));
+        assert!(state.db.get_current_provider("codex").unwrap().is_none());
+        let latest = preview_provider(&team, &state, "codex", Some("approved-model")).unwrap();
+        for _ in 0..16 {
+            assert_eq!(
+                preview_provider(&team, &state, "codex", Some("approved-model"))
+                    .unwrap()
+                    .decision_token,
+                latest.decision_token,
+                "reloading unchanged metadata must preserve the reviewed state"
+            );
+        }
+        activate_reviewed_provider(&team, &state, "codex", Some(&latest.decision_token)).unwrap();
+        assert_eq!(
+            state.db.get_current_provider("codex").unwrap().as_deref(),
+            Some(latest.provider_id.as_str())
+        );
+        std::env::remove_var("NEXUSOPS_CLIENT_TEST_HOME");
+    }
+
+    #[test]
+    #[serial]
+    fn review_recognizes_local_current_when_database_current_is_missing() {
+        let root = tempfile::tempdir().unwrap();
+        std::env::set_var("NEXUSOPS_CLIENT_TEST_HOME", root.path());
+        crate::settings::reload_settings().unwrap();
+        let credentials = Arc::new(MemoryCredentialStore::default());
+        let team =
+            TeamService::with_credentials(&root.path().join("team"), credentials.clone()).unwrap();
+        let mut connection = connection();
+        connection.id =
+            super::super::connection_id(&connection.gateway_url, &connection.profile).unwrap();
+        team.state.save_connection(&connection).unwrap();
+        credentials
+            .set(&connection.id, "nx_current_review_fixture")
+            .unwrap();
+        let state = AppState::new(Arc::new(Database::memory().unwrap()));
+        let imported =
+            apply_provider(&team, &state, "codex", Some("approved-model"), false).unwrap();
+        crate::settings::set_current_provider(&AppType::Codex, Some(&imported.provider_id))
+            .unwrap();
+        credentials
+            .set(&connection.id, "nx_rotated_review_fixture")
+            .unwrap();
+        let preview = preview_provider(&team, &state, "codex", Some("approved-model")).unwrap();
+        assert!(
+            preview.active,
+            "local current state must be reflected in the preview"
+        );
+        assert!(matches!(
+            apply_provider(&team, &state, "codex", Some("approved-model"), true),
+            Err(TeamProviderError::ActiveProviderUpdate)
+        ));
+        std::env::remove_var("NEXUSOPS_CLIENT_TEST_HOME");
     }
 
     #[test]

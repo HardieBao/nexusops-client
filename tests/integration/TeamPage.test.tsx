@@ -63,6 +63,9 @@ const connection = {
 };
 
 beforeEach(() => {
+  api.previewTeamProvider.mockReset();
+  api.applyTeamProvider.mockReset();
+  api.activateTeamProvider.mockReset();
   api.getTeamStatus.mockResolvedValue(null);
   api.getTeamLocalHistory.mockResolvedValue([]);
   api.connectTeam.mockResolvedValue(connection);
@@ -94,6 +97,147 @@ beforeEach(() => {
 });
 
 describe("TeamPage", () => {
+  const reviewedProvider = {
+    app: "codex",
+    provider_id: "team-provider",
+    name: "Team provider",
+    base_url: "https://gateway.example/v1",
+    authorized_models: ["approved-model"],
+    selected_model: "approved-model",
+    active: false,
+    change: "create",
+    changed_fields: [],
+    decision_token: "reviewed-create",
+  };
+
+  function connectWithModel() {
+    const ready = {
+      ...connection,
+      profile: {
+        ...connection.profile,
+        models: [
+          { id: "approved-model", name: "Approved model", platform: "openai" },
+        ],
+      },
+    };
+    api.getTeamStatus.mockResolvedValue(ready);
+    api.previewTeamSync.mockResolvedValue({
+      connection: ready,
+      conflicts: [],
+      items: [],
+      withdrawn: [],
+      last_successful_sync: null,
+    });
+  }
+
+  it("passes the reviewed snapshot separately to import and activation", async () => {
+    connectWithModel();
+    api.previewTeamProvider
+      .mockResolvedValueOnce(reviewedProvider)
+      .mockResolvedValueOnce({
+        ...reviewedProvider,
+        active: true,
+        change: "unchanged",
+        decision_token: "reviewed-active",
+      });
+    api.applyTeamProvider.mockResolvedValue({
+      ...reviewedProvider,
+      change: "unchanged",
+      decision_token: "reviewed-imported",
+    });
+    api.activateTeamProvider.mockResolvedValue(undefined);
+    render(<TeamPage />);
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "team.provider.preview" }),
+      ).toBeEnabled(),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "team.provider.preview" }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "team.provider.import" }),
+      ).toBeEnabled(),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "team.provider.import" }),
+    );
+    await waitFor(() =>
+      expect(api.applyTeamProvider).toHaveBeenCalledWith(
+        "codex",
+        "approved-model",
+        false,
+        "reviewed-create",
+      ),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "team.provider.activate" }),
+      ).toBeEnabled(),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "team.provider.activate" }),
+    );
+    await waitFor(() =>
+      expect(api.activateTeamProvider).toHaveBeenCalledWith(
+        "codex",
+        "reviewed-imported",
+      ),
+    );
+  });
+
+  it.each(["provider_preview_stale", "authentication_required"])(
+    "discards a rejected preview after %s",
+    async (code) => {
+      connectWithModel();
+      api.previewTeamProvider.mockResolvedValue(reviewedProvider);
+      api.applyTeamProvider.mockRejectedValue({
+        code,
+        message: "Provider changed after review",
+      });
+      render(<TeamPage />);
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "team.provider.preview" }),
+        ).toBeEnabled(),
+      );
+      fireEvent.click(
+        screen.getByRole("button", { name: "team.provider.preview" }),
+      );
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: "team.provider.import" }),
+        ).toBeEnabled(),
+      );
+      if (code === "authentication_required") {
+        api.getTeamStatus.mockResolvedValue({
+          ...connection,
+          status: "authentication_required",
+          last_error: code,
+        });
+      }
+      fireEvent.click(
+        screen.getByRole("button", { name: "team.provider.import" }),
+      );
+      await screen.findByText("Provider changed after review");
+      expect(
+        screen.getByRole("button", { name: "team.provider.import" }),
+      ).toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "team.provider.activate" }),
+      ).toBeDisabled();
+      expect(api.activateTeamProvider).not.toHaveBeenCalled();
+      if (code === "authentication_required") {
+        await waitFor(() =>
+          expect(
+            screen.getByRole("button", { name: "team.provider.preview" }),
+          ).toBeDisabled(),
+        );
+      }
+    },
+  );
+
   it("keeps disconnect and recovery copy inside every Team locale", () => {
     for (const locale of [en, ja, zh, zhTW]) {
       expect(locale.team.disconnect.title).toBeTruthy();

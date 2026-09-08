@@ -166,8 +166,13 @@ pub async fn team_preview_provider(
     app: String,
     model: Option<String>,
 ) -> Result<ProviderPreview, TeamCommandError> {
+    let cancellation = team.begin_operation();
     let service = team.service()?;
-    let _sync = service.sync_operation.lock().await;
+    let _sync = tokio::select! {
+        _ = cancellation.cancelled() => return Err(TeamError::Cancelled.into()),
+        lock = service.sync_operation.lock() => lock,
+    };
+    service.refresh(&cancellation).await?;
     provider::preview_provider(service, app_state.inner(), &app, model.as_deref())
         .map_err(Into::into)
 }
@@ -179,15 +184,22 @@ pub async fn team_apply_provider(
     app: String,
     model: Option<String>,
     confirm_update: bool,
+    decision_token: Option<String>,
 ) -> Result<ProviderPreview, TeamCommandError> {
+    let cancellation = team.begin_operation();
     let service = team.service()?;
-    let _sync = service.sync_operation.lock().await;
-    provider::apply_provider(
+    let _sync = tokio::select! {
+        _ = cancellation.cancelled() => return Err(TeamError::Cancelled.into()),
+        lock = service.sync_operation.lock() => lock,
+    };
+    service.refresh(&cancellation).await?;
+    provider::apply_reviewed_provider(
         service,
         app_state.inner(),
         &app,
         model.as_deref(),
         confirm_update,
+        decision_token.as_deref(),
     )
     .map_err(Into::into)
 }
@@ -197,10 +209,22 @@ pub async fn team_activate_provider(
     team: State<'_, TeamServiceState>,
     app_state: State<'_, AppState>,
     app: String,
+    decision_token: Option<String>,
 ) -> Result<(), TeamCommandError> {
+    let cancellation = team.begin_operation();
     let service = team.service()?;
-    let _sync = service.sync_operation.lock().await;
-    provider::activate_provider(service, app_state.inner(), &app).map_err(Into::into)
+    let _sync = tokio::select! {
+        _ = cancellation.cancelled() => return Err(TeamError::Cancelled.into()),
+        lock = service.sync_operation.lock() => lock,
+    };
+    service.refresh(&cancellation).await?;
+    provider::activate_reviewed_provider(
+        service,
+        app_state.inner(),
+        &app,
+        decision_token.as_deref(),
+    )
+    .map_err(Into::into)
 }
 
 #[tauri::command]

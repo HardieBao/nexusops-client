@@ -41,12 +41,13 @@ pub fn team_apply_provider(
     _app: String,
     _model: Option<String>,
     _confirm_update: bool,
+    _decision_token: Option<String>,
 ) -> Result<serde_json::Value, String> {
     Err(DISABLED.into())
 }
 
 #[tauri::command]
-pub fn team_activate_provider(_app: String) -> Result<(), String> {
+pub fn team_activate_provider(_app: String, _decision_token: Option<String>) -> Result<(), String> {
     Err(DISABLED.into())
 }
 

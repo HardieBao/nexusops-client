@@ -360,6 +360,18 @@ export function TeamPage() {
     }
   };
 
+  const handleProviderFailure = async (reason: unknown, revision: number) => {
+    if (revision !== requestRevision.current) return;
+    setError(commandError(reason));
+    setProviderPreview(null);
+    try {
+      const status = await getTeamStatus();
+      if (revision === requestRevision.current) setConnection(status);
+    } catch {
+      // Keep the operation error if the stored connection cannot be read.
+    }
+  };
+
   const handleProviderPreview = async () => {
     const revision = ++requestRevision.current;
     const requestedApp = providerApp;
@@ -370,22 +382,17 @@ export function TeamPage() {
       const preview = await previewTeamProvider(requestedApp, requestedModel);
       if (revision === requestRevision.current) setProviderPreview(preview);
     } catch (reason) {
-      setError(commandError(reason));
-      try {
-        setConnection(await getTeamStatus());
-      } catch {
-        // Keep the sync error visible when local status cannot reload.
-      }
+      await handleProviderFailure(reason, revision);
     } finally {
-      setBusy(null);
+      if (revision === requestRevision.current) setBusy(null);
     }
   };
 
   const handleProviderApply = async () => {
     if (!providerPreview) return;
     const revision = ++requestRevision.current;
-    const requestedApp = providerApp;
-    const requestedModel = selectedModel;
+    const requestedApp = providerPreview.app;
+    const requestedModel = providerPreview.selected_model;
     setBusy("provider");
     setError(null);
     try {
@@ -393,29 +400,31 @@ export function TeamPage() {
         requestedApp,
         requestedModel,
         providerPreview.change === "update_requires_confirmation",
+        providerPreview.decision_token,
       );
       if (revision === requestRevision.current) setProviderPreview(preview);
     } catch (reason) {
-      setError(commandError(reason));
+      await handleProviderFailure(reason, revision);
     } finally {
-      setBusy(null);
+      if (revision === requestRevision.current) setBusy(null);
     }
   };
 
   const handleProviderActivate = async () => {
+    if (!providerPreview) return;
     const revision = ++requestRevision.current;
-    const requestedApp = providerApp;
-    const requestedModel = selectedModel;
+    const requestedApp = providerPreview.app;
+    const requestedModel = providerPreview.selected_model;
     setBusy("provider");
     setError(null);
     try {
-      await activateTeamProvider(requestedApp);
+      await activateTeamProvider(requestedApp, providerPreview.decision_token);
       const preview = await previewTeamProvider(requestedApp, requestedModel);
       if (revision === requestRevision.current) setProviderPreview(preview);
     } catch (reason) {
-      setError(commandError(reason));
+      await handleProviderFailure(reason, revision);
     } finally {
-      setBusy(null);
+      if (revision === requestRevision.current) setBusy(null);
     }
   };
 

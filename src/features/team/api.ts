@@ -99,6 +99,7 @@ export interface ProviderPreview {
   active: boolean;
   change: ProviderChange;
   changed_fields: string[];
+  decision_token: string;
 }
 
 export interface TeamCommandError {
@@ -218,16 +219,18 @@ export function applyTeamProvider(
   app: string,
   model: string | null,
   confirmUpdate: boolean,
+  decisionToken: string,
 ) {
   return invoke<ProviderPreview>("team_apply_provider", {
     app,
     model,
     confirmUpdate,
+    decisionToken,
   });
 }
 
-export function activateTeamProvider(app: string) {
-  return invoke<void>("team_activate_provider", { app });
+export function activateTeamProvider(app: string, decisionToken: string) {
+  return invoke<void>("team_activate_provider", { app, decisionToken });
 }
 
 export function previewTeamSync(app: string) {
