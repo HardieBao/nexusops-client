@@ -574,6 +574,9 @@ mod tests {
         let fixture: serde_json::Value =
             serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
         let key = fixture["key"]["key"].as_str().unwrap();
+        let gateway = fixture["gateway_url"]
+            .as_str()
+            .unwrap_or("http://127.0.0.1:18191");
         let directory = tempfile::tempdir().unwrap();
         let team = TeamService::with_credentials(
             directory.path(),
@@ -581,10 +584,7 @@ mod tests {
         )
         .unwrap();
         let cancel = Cancellation::default();
-        let connected = team
-            .connect("http://127.0.0.1:18191", key, &cancel)
-            .await
-            .unwrap();
+        let connected = team.connect(gateway, key, &cancel).await.unwrap();
         assert_eq!(connected.profile.organization_id, "local");
         assert_eq!(connected.profile.key.platform, "openai");
         assert!(connected.profile.models.is_empty());

@@ -2738,6 +2738,9 @@ mod tests {
         let fixture: serde_json::Value =
             serde_json::from_slice(&fs::read(state_path).unwrap()).unwrap();
         let key = fixture["key"]["key"].as_str().unwrap();
+        let gateway = fixture["gateway_url"]
+            .as_str()
+            .unwrap_or("http://127.0.0.1:18191");
         let temporary = if std::env::var_os("NEXUSOPS_TEAM_SYNC_ROOT").is_none() {
             Some(tempfile::tempdir().unwrap())
         } else {
@@ -2756,9 +2759,7 @@ mod tests {
         .unwrap();
         let app_state = AppState::new(Arc::new(Database::memory().unwrap()));
         let cancel = Cancellation::default();
-        team.connect("http://127.0.0.1:18191", key, &cancel)
-            .await
-            .unwrap();
+        team.connect(gateway, key, &cancel).await.unwrap();
 
         let first = sync_all(&team, &app_state, "codex", &[], &cancel)
             .await

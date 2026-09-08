@@ -416,17 +416,17 @@ fn build_team_provider(
 }
 
 fn provider_endpoint(profile: &TeamProfile, app: &AppType) -> String {
-    let base = profile.base_url.trim_end_matches('/');
+    let base = profile.base_url.trim().trim_end_matches('/');
     let root = base.strip_suffix("/v1").unwrap_or(base);
     let platform = profile.key.platform.to_ascii_lowercase();
     match (platform.as_str(), app) {
         ("antigravity", AppType::Claude | AppType::Gemini) => {
-            format!("{base}/antigravity")
+            format!("{root}/antigravity")
         }
-        ("grok", AppType::Claude) => root.into(),
         ("grok", AppType::Codex | AppType::GrokBuild | AppType::OpenCode) => {
             format!("{root}/v1")
         }
+        (_, AppType::Claude | AppType::Gemini) => root.into(),
         _ => base.into(),
     }
 }
@@ -787,7 +787,7 @@ mod tests {
         antigravity.base_url = "https://gateway.example/prefix/v1".into();
         assert_eq!(
             provider_endpoint(&antigravity, &AppType::Claude),
-            "https://gateway.example/prefix/v1/antigravity"
+            "https://gateway.example/prefix/antigravity"
         );
         let mut grok = connection.profile.clone();
         grok.key.platform = "grok".into();
@@ -796,6 +796,195 @@ mod tests {
             provider_endpoint(&grok, &AppType::Claude),
             "https://gateway.example/prefix"
         );
+    }
+
+    #[tokio::test]
+    async fn generated_tool_settings_reach_gateway_protocol_routes() {
+        use axum::{http::StatusCode, routing::post, Router};
+
+        // These are the Gateway's registered protocol paths behind /proxy.
+        let router = Router::new()
+            .route(
+                "/proxy/v1/messages",
+                post(|| async { StatusCode::NO_CONTENT }),
+            )
+            .route(
+                "/proxy/v1beta/models/approved-model:generateContent",
+                post(|| async { StatusCode::NO_CONTENT }),
+            )
+            .route(
+                "/proxy/antigravity/v1/messages",
+                post(|| async { StatusCode::NO_CONTENT }),
+            )
+            .route(
+                "/proxy/antigravity/v1beta/models/approved-model:generateContent",
+                post(|| async { StatusCode::NO_CONTENT }),
+            );
+        let (origin, server) = super::super::api::tests::serve(router).await;
+        let client = reqwest::Client::new();
+        for (platform, app, variable, path) in [
+            (
+                "anthropic",
+                AppType::Claude,
+                "ANTHROPIC_BASE_URL",
+                "v1/messages",
+            ),
+            (
+                "openai",
+                AppType::Claude,
+                "ANTHROPIC_BASE_URL",
+                "v1/messages",
+            ),
+            (
+                "gemini",
+                AppType::Gemini,
+                "GOOGLE_GEMINI_BASE_URL",
+                "v1beta/models/approved-model:generateContent",
+            ),
+            (
+                "antigravity",
+                AppType::Claude,
+                "ANTHROPIC_BASE_URL",
+                "v1/messages",
+            ),
+            (
+                "antigravity",
+                AppType::Gemini,
+                "GOOGLE_GEMINI_BASE_URL",
+                "v1beta/models/approved-model:generateContent",
+            ),
+        ] {
+            let mut connection = connection();
+            connection.profile.key.platform = platform.into();
+            connection.profile.key.allow_messages_dispatch = true;
+            for suffix in ["", "/v1", "/v1///"] {
+                connection.profile.base_url = format!("{origin}proxy{suffix}");
+                let provider = build_team_provider(
+                    &connection,
+                    &app,
+                    Some("approved-model"),
+                    "nx_synthetic_fixture",
+                )
+                .unwrap();
+                let base = provider.settings_config["env"][variable].as_str().unwrap();
+                let response = client.post(format!("{base}/{path}")).send().await.unwrap();
+                assert_eq!(
+                    response.status(),
+                    reqwest::StatusCode::NO_CONTENT,
+                    "{platform} / {app:?} / {suffix}"
+                );
+            }
+        }
+        server.abort();
+    }
+
+    #[test]
+    fn tool_endpoints_preserve_non_version_prefixes_and_codex_configuration() {
+        let mut profile = connection().profile;
+        profile.base_url = "https://gateway.example/proxy/v10/".into();
+        assert_eq!(
+            provider_endpoint(&profile, &AppType::Codex),
+            "https://gateway.example/proxy/v10"
+        );
+        assert_eq!(
+            provider_endpoint(&profile, &AppType::Claude),
+            "https://gateway.example/proxy/v10"
+        );
+        profile.key.platform = "antigravity".into();
+        assert_eq!(
+            provider_endpoint(&profile, &AppType::Gemini),
+            "https://gateway.example/proxy/v10/antigravity"
+        );
+    }
+
+    #[tokio::test]
+    #[serial]
+    #[ignore = "requires the isolated Gateway fixture with synthetic core_tools accounts"]
+    async fn real_gateway_provider_import_activation_and_model_request() {
+        let path =
+            std::env::var_os("NEXUSOPS_TEAM_HTTP_STATE_FILE").expect("set isolated fixture state");
+        let fixture: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(path).unwrap()).unwrap();
+        let gateway = fixture["gateway_url"].as_str().unwrap();
+        assert!(gateway.starts_with("http://127.0.0.1:"));
+        let root = tempfile::tempdir().unwrap();
+        std::env::set_var("NEXUSOPS_CLIENT_TEST_HOME", root.path());
+        crate::settings::reload_settings().unwrap();
+        for (platform, app, base_variable, auth_variable) in [
+            (
+                "anthropic",
+                AppType::Claude,
+                "ANTHROPIC_BASE_URL",
+                "ANTHROPIC_AUTH_TOKEN",
+            ),
+            (
+                "gemini",
+                AppType::Gemini,
+                "GOOGLE_GEMINI_BASE_URL",
+                "GEMINI_API_KEY",
+            ),
+        ] {
+            let key = fixture["core_tools"][platform]["key"].as_str().unwrap();
+            let model = fixture["core_tools"][platform]["model"].as_str().unwrap();
+            let credentials = Arc::new(MemoryCredentialStore::default());
+            let team =
+                TeamService::with_credentials(&root.path().join(platform), credentials).unwrap();
+            let state = AppState::new(Arc::new(Database::memory().unwrap()));
+            let cancel = super::super::api::Cancellation::default();
+            team.connect(gateway, key, &cancel).await.unwrap();
+            let preview = preview_provider(&team, &state, app.as_str(), Some(model)).unwrap();
+            assert_eq!(preview.change, ProviderChange::Create);
+            assert!(preview.authorized_models.iter().any(|id| id == model));
+            let imported = apply_provider(&team, &state, app.as_str(), Some(model), false).unwrap();
+            assert!(!imported.active);
+            apply_provider(&team, &state, app.as_str(), Some(model), false).unwrap();
+            activate_provider(&team, &state, app.as_str()).unwrap();
+            assert!(
+                preview_provider(&team, &state, app.as_str(), Some(model))
+                    .unwrap()
+                    .active
+            );
+            let provider = state
+                .db
+                .get_provider_by_id(&preview.provider_id, app.as_str())
+                .unwrap()
+                .unwrap();
+            let env = &provider.settings_config["env"];
+            let base = env[base_variable].as_str().unwrap();
+            let saved_key = env[auth_variable].as_str().unwrap();
+            assert!(
+                saved_key == key,
+                "import must preserve the selected member credential"
+            );
+            let (url, header, body) = if app == AppType::Claude {
+                (
+                    format!("{base}/v1/messages"),
+                    "x-api-key",
+                    serde_json::json!({"model":model,"max_tokens":8,"messages":[{"role":"user","content":"Return fixture-ok"}]}),
+                )
+            } else {
+                (
+                    format!("{base}/v1beta/models/{model}:generateContent"),
+                    "x-goog-api-key",
+                    serde_json::json!({"contents":[{"role":"user","parts":[{"text":"Return fixture-ok"}]}]}),
+                )
+            };
+            let response = reqwest::Client::new()
+                .post(url)
+                .header(header, saved_key)
+                .json(&body)
+                .send()
+                .await
+                .unwrap();
+            assert!(
+                response.status().is_success(),
+                "{platform} inference failed"
+            );
+            assert!(response.text().await.unwrap().contains("fixture-ok"));
+            team.disconnect().await.unwrap();
+            assert!(team.status().unwrap().is_none());
+        }
+        std::env::remove_var("NEXUSOPS_CLIENT_TEST_HOME");
     }
 
     #[test]
