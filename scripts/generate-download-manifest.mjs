@@ -1,19 +1,23 @@
 #!/usr/bin/env node
 // Generates the website download manifest (manifest.json) from a directory of
-// downloaded release assets. Consumed by ccswitch.io/download. The manifest
-// schema is mirrored in cc-switch-website/src/lib/downloads.ts — keep both in
-// sync when changing fields or classification rules.
+// downloaded NexusOps Client release assets. This optional manifest is for a
+// future NexusOps-owned download mirror; GitHub Releases remains authoritative.
 //
-// Usage: node scripts/generate-download-manifest.mjs <assets-dir> <tag> <base-url> [output] [pub-date]
+// Usage: node scripts/generate-download-manifest.mjs <assets-dir> <tag> <base-url> <commit> [output] [pub-date]
 
-import { createHash } from 'node:crypto';
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { createHash } from "node:crypto";
+import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-const [assetsDir, tag, baseUrl, output = 'manifest.json', pubDateArg] = process.argv.slice(2);
+import { getReleaseAssetContract } from "./release-asset-contract.mjs";
 
-if (!assetsDir || !tag || !baseUrl) {
-  console.error('Usage: node scripts/generate-download-manifest.mjs <assets-dir> <tag> <base-url> [output] [pub-date]');
+const [assetsDir, tag, baseUrl, commit, output = "manifest.json", pubDateArg] =
+  process.argv.slice(2);
+
+if (!assetsDir || !tag || !baseUrl || !commit) {
+  console.error(
+    "Usage: node scripts/generate-download-manifest.mjs <assets-dir> <tag> <base-url> <commit> [output] [pub-date]",
+  );
   process.exit(1);
 }
 
@@ -24,51 +28,75 @@ if (Number.isNaN(pubDate.getTime())) {
   process.exit(1);
 }
 
-// Longer suffixes must come before their shorter counterparts
-// (e.g. -Windows-arm64.msi before -Windows.msi).
-const RULES = [
-  { suffix: '-macOS.dmg', platform: 'macos', kind: 'dmg', arch: 'universal' },
-  { suffix: '-macOS.zip', platform: 'macos', kind: 'zip', arch: 'universal' },
-  { suffix: '-Windows-arm64-Portable.zip', platform: 'windows', kind: 'portable', arch: 'arm64' },
-  { suffix: '-Windows-Portable.zip', platform: 'windows', kind: 'portable', arch: 'x64' },
-  { suffix: '-Windows-arm64.msi', platform: 'windows', kind: 'msi', arch: 'arm64' },
-  { suffix: '-Windows.msi', platform: 'windows', kind: 'msi', arch: 'x64' },
-  { suffix: '-Linux-arm64.AppImage', platform: 'linux', kind: 'appimage', arch: 'arm64' },
-  { suffix: '-Linux-x86_64.AppImage', platform: 'linux', kind: 'appimage', arch: 'x64' },
-  { suffix: '-Linux-arm64.deb', platform: 'linux', kind: 'deb', arch: 'arm64' },
-  { suffix: '-Linux-x86_64.deb', platform: 'linux', kind: 'deb', arch: 'x64' },
-  { suffix: '-Linux-arm64.rpm', platform: 'linux', kind: 'rpm', arch: 'arm64' },
-  { suffix: '-Linux-x86_64.rpm', platform: 'linux', kind: 'rpm', arch: 'x64' },
-];
-
-const normalizedBase = baseUrl.replace(/\/+$/, '');
-const files = [];
-
-for (const name of readdirSync(assetsDir).sort()) {
-  // Unmatched files (.sig, .tar.gz updater artifacts, latest.json) are
-  // deliberately skipped — they are not user-facing downloads.
-  const rule = RULES.find((entry) => name.endsWith(entry.suffix));
-  if (!rule) continue;
-  const path = join(assetsDir, name);
-  files.push({
-    platform: rule.platform,
-    kind: rule.kind,
-    arch: rule.arch,
-    name,
-    size: statSync(path).size,
-    sha256: createHash('sha256').update(readFileSync(path)).digest('hex'),
-    url: `${normalizedBase}/${tag}/${encodeURIComponent(name)}`,
-  });
+const normalizedBase = baseUrl.replace(/\/+$/, "");
+if (new URL(`${normalizedBase}/`).protocol !== "https:") {
+  console.error(`Download base URL must use HTTPS: ${baseUrl}`);
+  process.exit(1);
 }
-
-if (files.length === 0) {
-  console.error(`No release assets matched in ${assetsDir}`);
+if (!/^v\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(tag)) {
+  console.error(`Release tag is not a supported semantic version: ${tag}`);
+  process.exit(1);
+}
+if (!/^[0-9a-f]{40}$/i.test(commit)) {
+  console.error(
+    `Release commit must be a full 40-character Git SHA: ${commit}`,
+  );
   process.exit(1);
 }
 
+const contract = getReleaseAssetContract(tag);
+const expected = contract.downloads;
+const identities = new Set();
+for (const entry of expected) {
+  const identity = `${entry.platform}/${entry.arch}/${entry.kind}`;
+  if (identities.has(identity)) {
+    console.error(
+      `Duplicate download platform entry in manifest rules: ${identity}`,
+    );
+    process.exit(1);
+  }
+  identities.add(identity);
+}
+
+const directoryNames = readdirSync(assetsDir).sort();
+for (const name of directoryNames) {
+  if (!contract.requiredReleaseNames.has(name)) {
+    console.error(`Unexpected release asset: ${name}`);
+    process.exit(1);
+  }
+}
+
+const files = [];
+
+for (const entry of expected) {
+  const path = join(assetsDir, entry.name);
+  if (!statExists(path)) {
+    console.error(`Required download artifact is missing: ${path}`);
+    process.exit(1);
+  }
+  files.push({
+    platform: entry.platform,
+    kind: entry.kind,
+    arch: entry.arch,
+    name: entry.name,
+    size: statSync(path).size,
+    sha256: createHash("sha256").update(readFileSync(path)).digest("hex"),
+    url: `${normalizedBase}/${tag}/${encodeURIComponent(entry.name)}`,
+  });
+}
+
+function statExists(path) {
+  try {
+    return statSync(path).isFile();
+  } catch {
+    return false;
+  }
+}
+
 const manifest = {
-  version: tag.replace(/^v/, ''),
+  version: tag.replace(/^v/, ""),
   tag,
+  commit: commit.toLowerCase(),
   pubDate: pubDate.toISOString(),
   files,
 };

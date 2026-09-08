@@ -1050,7 +1050,7 @@ impl Database {
             .map_err(|e| AppError::Database(format!("序列化旧 skills 快照失败: {e}")))?;
 
         // 标记：需要在启动后从文件系统扫描并重建 Skills 数据
-        // 说明：v3 结构将 Skills 的 SSOT 迁移到 ~/.cc-switch/skills/，
+        // 说明：v3 结构将 Skills 的 SSOT 迁移到应用配置目录的 skills/，
         // 旧表只存“安装记录”，无法直接无损迁移到新结构，因此改为启动后扫描 app 目录导入。
         let _ = conn.execute(
             "INSERT OR REPLACE INTO settings (key, value) VALUES ('skills_ssot_migration_pending', 'true')",
@@ -1769,6 +1769,8 @@ impl Database {
                 "0.30",
                 "3.75",
             ),
+            // GPT-6 系列
+            ("gpt-6-astra", "GPT-6 Astra", "10", "50", "1", "12.5"),
             // GPT-5.6 系列（Sol / Terra / Luna，2026-06 发布）
             // 5.6 家族起 cache write 收 1.25× 输入价（此前 GPT 模型写缓存免费，勿回填旧系列）
             ("gpt-5.6-sol", "GPT-5.6 Sol", "5", "30", "0.50", "6.25"),
@@ -1975,6 +1977,15 @@ impl Database {
             ("gpt-4.1", "GPT-4.1", "2", "8", "0.50", "0"),
             ("gpt-4.1-mini", "GPT-4.1 Mini", "0.40", "1.60", "0.10", "0"),
             ("gpt-4.1-nano", "GPT-4.1 Nano", "0.10", "0.40", "0.025", "0"),
+            // Gemini 3.8 系列
+            (
+                "gemini-3.8-flash",
+                "Gemini 3.8 Flash",
+                "0.75",
+                "3.75",
+                "0.075",
+                "0",
+            ),
             // Gemini 3.7 系列
             // 录的是介绍价（官方公告 + ai.google.dev 价表 + models.dev 三源一致）。
             // ⚠️ 介绍价 2026-12-31 到期，2027-01-01 起恢复 1.50/7.50/0.15（= 3.6 Flash 现价）。
@@ -2346,6 +2357,14 @@ impl Database {
             ("glm-5.1", "GLM-5.1", "1.4", "4.4", "0.26", "0"),
             ("glm-5.2", "GLM-5.2", "1.4", "4.4", "0.26", "0"),
             ("glm-5.3", "GLM-5.3", "1.4", "4.4", "0.26", "0"),
+            (
+                "glm-5.3-flash",
+                "GLM-5.3-Flash",
+                "0.15",
+                "0.50",
+                "0.03",
+                "0",
+            ),
             ("glm-5-turbo", "GLM-5-Turbo", "1.2", "4", "0.24", "0"),
             ("glm-5v-turbo", "GLM-5V-Turbo", "1.2", "4", "0.24", "0"),
             // MiMo (小米)

@@ -204,9 +204,30 @@ describe("App integration with MSW", () => {
     toastErrorMock.mockReset();
     skillsPanelMocks.checkUpdates.mockReset();
     skillsPanelMocks.openDiscovery.mockReset();
-    localStorage.removeItem("cc-switch-last-view");
-    localStorage.removeItem("cc-switch-last-app");
+    localStorage.removeItem("nexusops-client-last-view");
+    localStorage.removeItem("nexusops-client-last-app");
   });
+
+  it("shows the Team entry only when the build feature is enabled", async () => {
+    server.use(
+      http.post("http://tauri.local/team_feature_enabled", () =>
+        HttpResponse.json(true),
+      ),
+    );
+    const { default: App } = await import("@/App");
+    renderApp(App);
+    expect(await screen.findByTitle("team.title")).toBeInTheDocument();
+  }, 15_000);
+
+  it("does not mount Team commands from a saved view when the feature is disabled", async () => {
+    localStorage.setItem("nexusops-client-last-view", "team");
+    const { default: App } = await import("@/App");
+    renderApp(App);
+    await waitFor(() =>
+      expect(screen.getByTestId("provider-list")).toBeInTheDocument(),
+    );
+    expect(screen.queryByText("team.connect.heading")).not.toBeInTheDocument();
+  }, 15_000);
 
   it("covers basic provider flows via real hooks", async () => {
     const { default: App } = await import("@/App");
@@ -351,7 +372,7 @@ describe("App integration with MSW", () => {
   });
 
   it("warns without blocking when removing Pi's global default provider", async () => {
-    localStorage.setItem("cc-switch-last-app", "pi");
+    localStorage.setItem("nexusops-client-last-app", "pi");
     setProviders("pi", {
       custom: {
         id: "custom",
@@ -444,7 +465,7 @@ describe("App integration with MSW", () => {
   });
 
   it("hosts the Skills check-update action in the App toolbar", async () => {
-    localStorage.setItem("cc-switch-last-view", "skills");
+    localStorage.setItem("nexusops-client-last-view", "skills");
     const { default: App } = await import("@/App");
     renderApp(App);
 
@@ -461,7 +482,7 @@ describe("App integration with MSW", () => {
   });
 
   it("routes the Skills discover toolbar action through the panel guard", async () => {
-    localStorage.setItem("cc-switch-last-view", "skills");
+    localStorage.setItem("nexusops-client-last-view", "skills");
     const { default: App } = await import("@/App");
     renderApp(App);
 

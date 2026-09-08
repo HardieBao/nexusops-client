@@ -65,14 +65,17 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version-file: ".node-version"
 
       - name: Setup pnpm
-        env:
-          COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+        uses: pnpm/action-setup@v4
+        with:
+          version: "10.12.3"
+          run_install: false
+
+      - name: Verify Node.js and pnpm
         run: |
-          corepack enable
-          corepack install
+          node --version
           pnpm --version
 
       - name: Get pnpm store directory

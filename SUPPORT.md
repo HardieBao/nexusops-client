@@ -1,59 +1,45 @@
 # Support / 获取帮助
 
-> [中文版本](#获取帮助)
+> [中文](#获取帮助)
 
-## How to Get Help
+## NexusOps Client support
 
-CC Switch is an open-source project maintained by volunteers. We're happy to help, but please use the right channel so we can respond efficiently.
+This repository supports NexusOps Client code and documentation. It does not provide support for official CC Switch releases, and CC Switch maintainers do not support this fork.
 
-### Before Asking
+Before opening a report:
 
-1. **Read the [FAQ](https://github.com/farion1231/cc-switch#faq)** — most common questions are answered there.
-2. **Search [existing issues](https://github.com/farion1231/cc-switch/issues)** (including closed ones) — someone may have had the same question.
+1. Read the [README](./README.md), [Team guide](./TEAM_GUIDE.md), and [release requirements](./RELEASE.md).
+2. Search [NexusOps Client issues](https://github.com/HardieBao/nexusops-client/issues), including closed issues.
+3. Record the NexusOps Client commit or release, operating system, architecture, and exact reproduction steps. Redact member keys, provider credentials, organization assets, and private Gateway URLs.
 
-### Asking a Question
+Use the fork's issue tracker:
 
-- **Usage or configuration questions**: [Open a Question issue](https://github.com/farion1231/cc-switch/issues/new?template=question.yml)
-- **General discussion**: [GitHub Discussions](https://github.com/farion1231/cc-switch/discussions)
+- [Report a bug](https://github.com/HardieBao/nexusops-client/issues/new)
+- [Request a feature or documentation change](https://github.com/HardieBao/nexusops-client/issues/new)
+- For vulnerabilities, do not open a public issue; follow the [Security Policy](./SECURITY.md).
 
-### Reporting Problems
+Development snapshots do not imply a supported installer, updater, operating system, provider, or model. Include concrete build or runtime evidence rather than relying on an upstream CC Switch support claim.
 
-- **Bug reports**: [Open a Bug Report](https://github.com/farion1231/cc-switch/issues/new?template=bug_report.yml)
-- **Documentation issues**: [Open a Doc Issue](https://github.com/farion1231/cc-switch/issues/new?template=doc_issue.yml)
-- **Security vulnerabilities**: Please do NOT use public issues. See our [Security Policy](./SECURITY.md).
-
-### Feature Requests
-
-- [Submit a Feature Request](https://github.com/farion1231/cc-switch/issues/new?template=feature_request.yml)
-- Please open an issue for discussion before submitting a PR for new features.
+If a problem also reproduces on an unmodified CC Switch release, use the upstream project's channels for that upstream issue. Keep NexusOps-specific behavior in this repository.
 
 ---
 
 # 获取帮助
 
-> [English Version](#support--获取帮助)
+本仓库只处理 NexusOps Client 的代码和文档，不为 CC Switch 官方发布版提供支持；CC Switch 维护者也不为本 fork 提供支持。
 
-## 如何获取帮助
+提交问题前：
 
-CC Switch 是一个由志愿者维护的开源项目。我们很乐意提供帮助，但请使用合适的渠道，以便我们高效响应。
+1. 阅读[项目说明](./README_ZH.md)、[Team 指南](./TEAM_GUIDE.md)和[发布要求](./RELEASE.md)。
+2. 搜索 [NexusOps Client Issue](https://github.com/HardieBao/nexusops-client/issues)，包括已关闭的问题。
+3. 记录 NexusOps Client 的 commit 或版本、操作系统、架构和完整复现步骤。请脱敏成员 Key、Provider 凭据、组织资产与私有 Gateway 地址。
 
-### 提问之前
+使用本 fork 的 Issue：
 
-1. **阅读 [常见问题](https://github.com/farion1231/cc-switch#常见问题)** — 大多数常见问题都已在其中解答。
-2. **搜索 [已有的 Issue](https://github.com/farion1231/cc-switch/issues)**（包括已关闭的） — 可能已经有人问过相同的问题。
+- [报告 Bug](https://github.com/HardieBao/nexusops-client/issues/new)
+- [提出功能或文档建议](https://github.com/HardieBao/nexusops-client/issues/new)
+- 安全漏洞不要提交公开 Issue，请按[安全策略](./SECURITY.md)私下报告。
 
-### 提问
+开发快照不代表安装包、自动更新、操作系统、Provider 或模型已经获得支持。请附实际构建或运行证据，不要直接引用上游 CC Switch 的支持声明。
 
-- **使用或配置问题**：[提交问题 Issue](https://github.com/farion1231/cc-switch/issues/new?template=question.yml)
-- **一般讨论**：[GitHub 讨论区](https://github.com/farion1231/cc-switch/discussions)
-
-### 报告问题
-
-- **Bug 报告**：[提交 Bug 报告](https://github.com/farion1231/cc-switch/issues/new?template=bug_report.yml)
-- **文档问题**：[提交文档问题](https://github.com/farion1231/cc-switch/issues/new?template=doc_issue.yml)
-- **安全漏洞**：请不要使用公开 Issue。请参阅我们的[安全策略](./SECURITY.md)。
-
-### 功能请求
-
-- [提交功能请求](https://github.com/farion1231/cc-switch/issues/new?template=feature_request.yml)
-- 提交新功能的 PR 之前，请先开 Issue 讨论。
+如果问题也能在未经修改的 CC Switch 发布版中复现，请通过上游项目渠道报告该上游问题；NexusOps 特有行为继续在本仓库处理。

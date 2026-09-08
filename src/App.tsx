@@ -27,6 +27,7 @@ import {
   LayoutDashboard,
   Loader2,
   RefreshCw,
+  UsersRound,
 } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Provider, VisibleApps } from "@/types";
@@ -107,6 +108,7 @@ import ToolsPanel from "@/components/openclaw/ToolsPanel";
 import AgentsDefaultsPanel from "@/components/openclaw/AgentsDefaultsPanel";
 import OpenClawHealthBanner from "@/components/openclaw/OpenClawHealthBanner";
 import HermesMemoryPanel from "@/components/hermes/HermesMemoryPanel";
+import { TeamPage } from "@/features/team/TeamPage";
 import {
   APP_IDS,
   DEFAULT_VISIBLE_APPS,
@@ -127,7 +129,8 @@ type View =
   | "openclawEnv"
   | "openclawTools"
   | "openclawAgents"
-  | "hermesMemory";
+  | "hermesMemory"
+  | "team";
 
 interface SyncStatusUpdatedPayload {
   source?: string;
@@ -138,7 +141,7 @@ interface SyncStatusUpdatedPayload {
 const DEFAULT_DRAG_BAR_HEIGHT = isWindows() || isLinux() ? 0 : 28; // px
 const HEADER_HEIGHT = 64; // px
 
-const STORAGE_KEY = "cc-switch-last-app";
+const STORAGE_KEY = "nexusops-client-last-app";
 const getInitialApp = (): AppId => {
   const saved = localStorage.getItem(STORAGE_KEY) as AppId | null;
   if (saved && APP_IDS.includes(saved)) {
@@ -147,7 +150,7 @@ const getInitialApp = (): AppId => {
   return "claude";
 };
 
-const VIEW_STORAGE_KEY = "cc-switch-last-view";
+const VIEW_STORAGE_KEY = "nexusops-client-last-view";
 const VALID_VIEWS: View[] = [
   "providers",
   "settings",
@@ -163,6 +166,7 @@ const VALID_VIEWS: View[] = [
   "openclawTools",
   "openclawAgents",
   "hermesMemory",
+  "team",
 ];
 
 const getInitialView = (): View => {
@@ -178,6 +182,7 @@ function App() {
   const queryClient = useQueryClient();
 
   const [activeApp, setActiveApp] = useState<AppId>(getInitialApp);
+  const [teamEnabled, setTeamEnabled] = useState(false);
   const sharedFeatureApp: AppId =
     activeApp === "claude-desktop" ? "claude" : activeApp;
   const [currentView, setCurrentView] = useState<View>(getInitialView);
@@ -200,6 +205,19 @@ function App() {
   useEffect(() => {
     localStorage.setItem(VIEW_STORAGE_KEY, currentView);
   }, [currentView]);
+
+  useEffect(() => {
+    void invoke<boolean>("team_feature_enabled")
+      .then((enabled) => {
+        setTeamEnabled(enabled);
+        if (!enabled)
+          setCurrentView((view) => (view === "team" ? "providers" : view));
+      })
+      .catch(() => {
+        setTeamEnabled(false);
+        setCurrentView((view) => (view === "team" ? "providers" : view));
+      });
+  }, []);
 
   const { data: settingsData } = useSettingsQuery();
   const useAppWindowControls =
@@ -1030,6 +1048,8 @@ function App() {
           );
         case "hermesMemory":
           return <HermesMemoryPanel />;
+        case "team":
+          return teamEnabled ? <TeamPage /> : null;
         case "skills":
           return (
             <UnifiedSkillsPanel
@@ -1319,6 +1339,7 @@ function App() {
                   {currentView === "openclawAgents" &&
                     t("openclaw.agents.title")}
                   {currentView === "hermesMemory" && t("hermes.memory.title")}
+                  {currentView === "team" && t("team.title")}
                 </h1>
               </div>
             ) : (
@@ -1330,6 +1351,17 @@ function App() {
                     proxyStatus !== undefined && takeoverStatus !== undefined
                   }
                 />
+                {teamEnabled && (
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setCurrentView("team")}
+                    title={t("team.title")}
+                    className="hover:bg-black/5 dark:hover:bg-white/5"
+                  >
+                    <UsersRound className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"

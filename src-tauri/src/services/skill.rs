@@ -1,7 +1,7 @@
 //! Skills 服务层
 //!
 //! v3.10.0+ 统一管理架构：
-//! - SSOT（单一事实源）：`~/.cc-switch/skills/`
+//! - SSOT（单一事实源）：`~/.nexusops-client/skills/`
 //! - 安装时下载到 SSOT，按需同步到各应用目录
 //! - 数据库存储安装记录和启用状态
 
@@ -65,7 +65,7 @@ pub enum SyncMethod {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum SkillStorageLocation {
-    /// CC Switch 管理目录 (~/.cc-switch/skills/)
+    /// NexusOps Client 管理目录 (~/.nexusops-client/skills/)
     #[default]
     CcSwitch,
     /// Agent Skills 统一标准目录 (~/.agents/skills/)
@@ -493,6 +493,42 @@ fn parse_agents_lock() -> HashMap<String, LockRepoInfo> {
 
 // ========== SkillService ==========
 
+#[cfg(feature = "team")]
+const TEAM_SKILL_SSOT_TRANSACTION_DIR: &str = ".nexusops-team-ssot-transactions";
+
+#[cfg(feature = "team")]
+#[derive(Debug, Serialize, Deserialize)]
+struct TeamSkillSsotJournal {
+    version: u8,
+    operation: String,
+    directory: String,
+    skill_id: String,
+    app: AppType,
+    expected_old_tree_hash: Option<String>,
+    target_tree_hash: String,
+    had_destination: bool,
+    previous_skill: Option<InstalledSkill>,
+    target_skill: InstalledSkill,
+}
+
+#[cfg(feature = "team")]
+struct TeamSkillSsotPaths {
+    operation_dir: PathBuf,
+    journal: PathBuf,
+    journal_tmp: PathBuf,
+    stage: PathBuf,
+    backup: PathBuf,
+}
+
+#[cfg(feature = "team")]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum TeamSkillSsotFailPoint {
+    Staged,
+    OldRenamed,
+    NewRenamed,
+    DatabaseSaved,
+}
+
 pub struct SkillService;
 
 impl Default for SkillService {
@@ -545,7 +581,7 @@ impl SkillService {
 
     // ========== 路径管理 ==========
 
-    /// 获取 SSOT 目录（根据设置返回 ~/.cc-switch/skills/ 或 ~/.agents/skills/）
+    /// 获取 SSOT 目录（根据设置返回 ~/.nexusops-client/skills/ 或 ~/.agents/skills/）
     pub fn get_ssot_dir() -> Result<PathBuf> {
         let location = crate::settings::get_skill_storage_location();
         let dir = match location {
@@ -558,7 +594,7 @@ impl SkillService {
         Ok(dir)
     }
 
-    /// 获取 Skill 卸载备份目录（~/.cc-switch/skill-backups/）
+    /// 获取 Skill 卸载备份目录（~/.nexusops-client/skill-backups/）
     fn get_backup_dir() -> Result<PathBuf> {
         let dir = get_app_config_dir().join("skill-backups");
         fs::create_dir_all(&dir)?;
@@ -626,6 +662,764 @@ impl SkillService {
             AppType::Hermes => crate::hermes_config::get_hermes_dir().join("skills"),
             AppType::Pi => crate::pi_config::get_pi_agent_dir()?.join("skills"),
         })
+    }
+
+    /// Register content that the Team installer has already placed in one
+    /// tool's skill directory. The Team installer owns drift checks and
+    /// recoverable file replacement; this method keeps the upstream skill
+    /// catalog and SSOT projection consistent without touching personal rows.
+    #[cfg(feature = "team")]
+    #[allow(clippy::too_many_arguments)]
+    pub fn register_team_managed<F, H>(
+        db: &Arc<Database>,
+        app: &AppType,
+        id: &str,
+        directory: &str,
+        display_name: &str,
+        content_hash: &str,
+        operation: &str,
+        validate_current: F,
+        hash_tree: H,
+    ) -> Result<InstalledSkill>
+    where
+        F: FnOnce() -> std::result::Result<Option<String>, String>,
+        H: Fn(&Path) -> std::result::Result<String, String>,
+    {
+        Self::register_team_managed_inner(
+            db,
+            app,
+            id,
+            directory,
+            display_name,
+            content_hash,
+            operation,
+            validate_current,
+            hash_tree,
+            |skill| db.save_skill(skill).map_err(Into::into),
+            |_| Ok(()),
+        )
+    }
+
+    #[cfg(feature = "team")]
+    #[allow(clippy::too_many_arguments)]
+    fn register_team_managed_inner<F, H, S, P>(
+        db: &Arc<Database>,
+        app: &AppType,
+        id: &str,
+        directory: &str,
+        display_name: &str,
+        content_hash: &str,
+        operation: &str,
+        validate_current: F,
+        hash_tree: H,
+        save_skill: S,
+        failpoint: P,
+    ) -> Result<InstalledSkill>
+    where
+        F: FnOnce() -> std::result::Result<Option<String>, String>,
+        H: Fn(&Path) -> std::result::Result<String, String>,
+        S: FnOnce(&InstalledSkill) -> Result<()>,
+        P: Fn(TeamSkillSsotFailPoint) -> Result<()>,
+    {
+        let _state_guard = skill_state_write_guard();
+        if !id.starts_with("nexusops-team:") || !directory.starts_with("nexusops-") {
+            return Err(anyhow!("invalid NexusOps Team skill identity"));
+        }
+        let directory = Self::require_valid_directory(directory)?;
+        let operation = uuid::Uuid::parse_str(operation)
+            .context("invalid NexusOps Team skill operation id")?
+            .hyphenated()
+            .to_string();
+        let existing_skills = db.get_all_installed_skills()?;
+        let directory_owner = existing_skills
+            .values()
+            .find(|skill| skill.directory.eq_ignore_ascii_case(&directory));
+        if directory_owner.is_some_and(|skill| skill.id != id) {
+            return Err(anyhow!(
+                "Team skill directory conflicts with an existing personal skill"
+            ));
+        }
+        let existing = existing_skills
+            .values()
+            .find(|skill| skill.id == id)
+            .cloned();
+        if existing
+            .as_ref()
+            .is_some_and(|skill| skill.directory != directory)
+        {
+            return Err(anyhow!("Team skill identity does not match its directory"));
+        }
+
+        let ssot_dir = Self::get_ssot_dir()?;
+        let app_skills_dir = Self::get_app_skills_dir(app)?;
+        Self::ensure_distinct_skill_roots(&ssot_dir, &app_skills_dir, app)?;
+        let source = app_skills_dir.join(&directory);
+        let destination = ssot_dir.join(&directory);
+        let transaction_root = ssot_dir.join(TEAM_SKILL_SSOT_TRANSACTION_DIR);
+        let operation_dir = transaction_root.join(&operation);
+        let paths = TeamSkillSsotPaths {
+            journal: operation_dir.join("journal.json"),
+            journal_tmp: operation_dir.join("journal.tmp"),
+            stage: operation_dir.join("stage"),
+            backup: operation_dir.join("backup"),
+            operation_dir,
+        };
+
+        if let Some(journal) = Self::read_team_skill_ssot_journal(&paths)? {
+            Self::validate_team_skill_ssot_journal(
+                &journal,
+                &operation,
+                app,
+                id,
+                &directory,
+                display_name,
+                content_hash,
+            )?;
+
+            if Self::team_skill_catalog_eq(existing.as_ref(), Some(&journal.target_skill)) {
+                let destination_hash = Self::team_skill_tree_hash(&destination, &hash_tree)?;
+                if destination_hash.as_deref() != Some(journal.target_tree_hash.as_str()) {
+                    return Err(anyhow!(
+                        "Team skill catalog is committed but its SSOT tree changed; preserving it"
+                    ));
+                }
+                if let Err(error) =
+                    Self::cleanup_team_skill_ssot_transaction(&journal, &paths, &hash_tree)
+                {
+                    log::warn!(
+                        "Team skill '{}' is committed but transaction cleanup is incomplete: {error:#}",
+                        journal.skill_id
+                    );
+                }
+                return Ok(journal.target_skill);
+            }
+            if !Self::team_skill_catalog_eq(existing.as_ref(), journal.previous_skill.as_ref()) {
+                return Err(anyhow!(
+                    "Team skill catalog changed while its SSOT transaction was pending; preserving all trees"
+                ));
+            }
+
+            Self::restore_team_skill_ssot_a(&journal, &destination, &paths, &hash_tree)?;
+            let actual_old_hash = validate_current().map_err(|error| anyhow!(error))?;
+            if actual_old_hash != journal.expected_old_tree_hash {
+                return Err(anyhow!(
+                    "Team skill SSOT changed after sync preview; preserving all trees"
+                ));
+            }
+            return Self::execute_team_skill_ssot_transaction(
+                &journal,
+                &source,
+                &destination,
+                &paths,
+                &hash_tree,
+                save_skill,
+                &failpoint,
+            );
+        }
+
+        Self::validate_sync_source_dir(&source, &directory)?;
+        let source_hash = hash_tree(&source).map_err(|error| anyhow!(error))?;
+
+        if existing.as_ref().is_some_and(|skill| {
+            skill.id == id
+                && skill.directory == directory
+                && skill.name == display_name
+                && skill.content_hash.as_deref() == Some(content_hash)
+                && skill.apps.is_enabled_for(app)
+        }) && Self::team_skill_tree_hash(&destination, &hash_tree)?.as_deref()
+            == Some(source_hash.as_str())
+        {
+            return Ok(existing.expect("checked above"));
+        }
+
+        let expected_destination_hash = validate_current().map_err(|error| anyhow!(error))?;
+        let destination_hash = Self::team_skill_tree_hash(&destination, &hash_tree)?;
+        if destination_hash != expected_destination_hash {
+            return Err(anyhow!(
+                "Team skill SSOT changed after sync preview; review it again"
+            ));
+        }
+
+        let mut apps = existing
+            .as_ref()
+            .map(|skill| skill.apps.clone())
+            .unwrap_or_default();
+        apps.set_enabled_for(app, true);
+        let now = chrono::Utc::now().timestamp();
+        let skill = InstalledSkill {
+            id: id.to_owned(),
+            name: display_name.to_owned(),
+            description: existing
+                .as_ref()
+                .and_then(|skill| skill.description.clone()),
+            directory: directory.clone(),
+            repo_owner: None,
+            repo_name: None,
+            repo_branch: None,
+            readme_url: None,
+            apps,
+            installed_at: existing
+                .as_ref()
+                .map(|skill| skill.installed_at)
+                .unwrap_or(now),
+            content_hash: Some(content_hash.to_owned()),
+            updated_at: now,
+        };
+
+        let journal = TeamSkillSsotJournal {
+            version: 1,
+            operation,
+            directory,
+            skill_id: id.to_owned(),
+            app: app.clone(),
+            expected_old_tree_hash: expected_destination_hash.clone(),
+            target_tree_hash: source_hash,
+            had_destination: expected_destination_hash.is_some(),
+            previous_skill: existing,
+            target_skill: skill,
+        };
+        Self::write_team_skill_ssot_journal(&transaction_root, &paths, &journal)?;
+        Self::execute_team_skill_ssot_transaction(
+            &journal,
+            &source,
+            &destination,
+            &paths,
+            &hash_tree,
+            save_skill,
+            &failpoint,
+        )
+    }
+
+    #[cfg(feature = "team")]
+    fn team_skill_tree_hash<H>(path: &Path, hash_tree: &H) -> Result<Option<String>>
+    where
+        H: Fn(&Path) -> std::result::Result<String, String>,
+    {
+        let metadata = match fs::symlink_metadata(path) {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(error) => return Err(error.into()),
+        };
+        if Self::team_metadata_is_link_or_reparse(&metadata) || !metadata.is_dir() {
+            return Err(anyhow!(
+                "Team skill transaction path is not a plain directory: {}",
+                path.display()
+            ));
+        }
+        hash_tree(path).map(Some).map_err(|error| anyhow!(error))
+    }
+
+    #[cfg(feature = "team")]
+    fn team_metadata_is_link_or_reparse(metadata: &fs::Metadata) -> bool {
+        if metadata.file_type().is_symlink() {
+            return true;
+        }
+        #[cfg(windows)]
+        {
+            use std::os::windows::fs::MetadataExt;
+            const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x400;
+            if metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0 {
+                return true;
+            }
+        }
+        false
+    }
+
+    #[cfg(feature = "team")]
+    fn ensure_plain_team_stage_tree(path: &Path) -> Result<()> {
+        let metadata = fs::symlink_metadata(path)?;
+        if Self::team_metadata_is_link_or_reparse(&metadata) || !metadata.is_dir() {
+            return Err(anyhow!(
+                "Team skill SSOT partial stage contains an unknown path; preserving it"
+            ));
+        }
+        for entry in fs::read_dir(path)? {
+            let entry = entry?;
+            let metadata = fs::symlink_metadata(entry.path())?;
+            if Self::team_metadata_is_link_or_reparse(&metadata) {
+                return Err(anyhow!(
+                    "Team skill SSOT partial stage contains a link or reparse point; preserving it"
+                ));
+            }
+            if metadata.is_dir() {
+                Self::ensure_plain_team_stage_tree(&entry.path())?;
+            } else if !metadata.is_file() {
+                return Err(anyhow!(
+                    "Team skill SSOT partial stage contains an unknown path; preserving it"
+                ));
+            }
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "team")]
+    fn team_skill_catalog_eq(
+        left: Option<&InstalledSkill>,
+        right: Option<&InstalledSkill>,
+    ) -> bool {
+        match (left, right) {
+            (None, None) => true,
+            (Some(left), Some(right)) => {
+                left.id == right.id
+                    && left.name == right.name
+                    && left.description == right.description
+                    && left.directory == right.directory
+                    && left.repo_owner == right.repo_owner
+                    && left.repo_name == right.repo_name
+                    && left.repo_branch == right.repo_branch
+                    && left.readme_url == right.readme_url
+                    && left.apps.claude == right.apps.claude
+                    && left.apps.codex == right.apps.codex
+                    && left.apps.gemini == right.apps.gemini
+                    && left.apps.grokbuild == right.apps.grokbuild
+                    && left.apps.opencode == right.apps.opencode
+                    && left.apps.hermes == right.apps.hermes
+                    && left.apps.pi == right.apps.pi
+                    && left.installed_at == right.installed_at
+                    && left.content_hash == right.content_hash
+                    && left.updated_at == right.updated_at
+            }
+            _ => false,
+        }
+    }
+
+    #[cfg(feature = "team")]
+    fn read_team_skill_ssot_journal(
+        paths: &TeamSkillSsotPaths,
+    ) -> Result<Option<TeamSkillSsotJournal>> {
+        let operation_metadata = match fs::symlink_metadata(&paths.operation_dir) {
+            Ok(metadata) => Some(metadata),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+            Err(error) => return Err(error.into()),
+        };
+        if let Some(metadata) = operation_metadata {
+            if Self::team_metadata_is_link_or_reparse(&metadata) || !metadata.is_dir() {
+                return Err(anyhow!(
+                    "Team skill transaction path is not a plain directory: {}",
+                    paths.operation_dir.display()
+                ));
+            }
+        }
+
+        let metadata = match fs::symlink_metadata(&paths.journal) {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+            Err(error) => return Err(error.into()),
+        };
+        if Self::team_metadata_is_link_or_reparse(&metadata)
+            || !metadata.is_file()
+            || metadata.len() > 64 * 1024
+        {
+            return Err(anyhow!(
+                "invalid NexusOps Team skill SSOT transaction journal"
+            ));
+        }
+        let body = fs::read(&paths.journal)?;
+        serde_json::from_slice(&body)
+            .context("invalid NexusOps Team skill SSOT transaction journal")
+            .map(Some)
+    }
+
+    #[cfg(feature = "team")]
+    #[allow(clippy::too_many_arguments)]
+    fn validate_team_skill_ssot_journal(
+        journal: &TeamSkillSsotJournal,
+        operation: &str,
+        app: &AppType,
+        id: &str,
+        directory: &str,
+        display_name: &str,
+        content_hash: &str,
+    ) -> Result<()> {
+        if journal.version != 1
+            || journal.operation != operation
+            || &journal.app != app
+            || journal.skill_id != id
+            || journal.directory != directory
+            || journal.had_destination != journal.expected_old_tree_hash.is_some()
+            || journal.target_tree_hash.is_empty()
+            || journal.target_skill.id != id
+            || journal.target_skill.directory != directory
+            || journal.target_skill.name != display_name
+            || journal.target_skill.content_hash.as_deref() != Some(content_hash)
+            || !journal.target_skill.apps.is_enabled_for(app)
+            || journal
+                .previous_skill
+                .as_ref()
+                .is_some_and(|skill| skill.id != id || skill.directory != directory)
+        {
+            return Err(anyhow!(
+                "NexusOps Team skill operation id was reused with different content"
+            ));
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "team")]
+    fn ensure_plain_team_transaction_dir(path: &Path) -> Result<()> {
+        match fs::symlink_metadata(path) {
+            Ok(metadata)
+                if metadata.is_dir() && !Self::team_metadata_is_link_or_reparse(&metadata) =>
+            {
+                Ok(())
+            }
+            Ok(_) => Err(anyhow!(
+                "Team skill transaction path is not a plain directory: {}",
+                path.display()
+            )),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => fs::create_dir(path)
+                .with_context(|| {
+                    format!(
+                        "failed to create Team skill transaction path: {}",
+                        path.display()
+                    )
+                }),
+            Err(error) => Err(error.into()),
+        }
+    }
+
+    #[cfg(feature = "team")]
+    fn write_team_skill_ssot_journal(
+        transaction_root: &Path,
+        paths: &TeamSkillSsotPaths,
+        journal: &TeamSkillSsotJournal,
+    ) -> Result<()> {
+        use std::io::Write;
+
+        Self::ensure_plain_team_transaction_dir(transaction_root)?;
+        Self::ensure_plain_team_transaction_dir(&paths.operation_dir)?;
+        for entry in fs::read_dir(&paths.operation_dir)? {
+            let entry = entry?;
+            if entry.path() != paths.journal_tmp {
+                return Err(anyhow!(
+                    "NexusOps Team skill operation directory contains unrecognized state"
+                ));
+            }
+            let metadata = entry.path().symlink_metadata()?;
+            if Self::team_metadata_is_link_or_reparse(&metadata) || !metadata.is_file() {
+                return Err(anyhow!(
+                    "NexusOps Team skill operation directory contains unrecognized state"
+                ));
+            }
+            fs::remove_file(entry.path())?;
+        }
+
+        let body = serde_json::to_vec(journal)?;
+        let mut file = fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .open(&paths.journal_tmp)?;
+        file.write_all(&body)?;
+        file.sync_all()?;
+        drop(file);
+        fs::rename(&paths.journal_tmp, &paths.journal)?;
+        Ok(())
+    }
+
+    #[cfg(feature = "team")]
+    fn restore_team_skill_ssot_a<H>(
+        journal: &TeamSkillSsotJournal,
+        destination: &Path,
+        paths: &TeamSkillSsotPaths,
+        hash_tree: &H,
+    ) -> Result<()>
+    where
+        H: Fn(&Path) -> std::result::Result<String, String>,
+    {
+        let destination_hash = Self::team_skill_tree_hash(destination, hash_tree)?;
+        let backup_hash = Self::team_skill_tree_hash(&paths.backup, hash_tree)?;
+
+        if let Some(backup_hash) = backup_hash.as_deref() {
+            if journal.expected_old_tree_hash.as_deref() != Some(backup_hash) {
+                return Err(anyhow!(
+                    "Team skill SSOT backup changed while recovery was pending; preserving all trees"
+                ));
+            }
+        }
+
+        if journal.had_destination {
+            let old_hash = journal
+                .expected_old_tree_hash
+                .as_deref()
+                .ok_or_else(|| anyhow!("invalid Team skill SSOT transaction journal"))?;
+            match destination_hash.as_deref() {
+                Some(hash) if hash == old_hash => {
+                    if backup_hash.is_some() {
+                        Self::remove_path(&paths.backup)?;
+                    }
+                }
+                Some(hash) if hash == journal.target_tree_hash => {
+                    if backup_hash.as_deref() != Some(old_hash) {
+                        return Err(anyhow!(
+                            "Team skill SSOT old tree is unavailable; preserving the current tree"
+                        ));
+                    }
+                    if Self::team_skill_tree_hash(&paths.stage, hash_tree)?.is_some() {
+                        return Err(anyhow!(
+                            "Team skill SSOT stage unexpectedly exists; preserving all trees"
+                        ));
+                    }
+                    // Move B back to the operation-owned stage atomically. If
+                    // the process exits before the next rename, the journal,
+                    // stage and backup still identify both complete trees.
+                    fs::rename(destination, &paths.stage)?;
+                    fs::rename(&paths.backup, destination)?;
+                }
+                None => {
+                    if backup_hash.as_deref() != Some(old_hash) {
+                        return Err(anyhow!(
+                            "Team skill SSOT old tree is unavailable; preserving transaction state"
+                        ));
+                    }
+                    fs::rename(&paths.backup, destination)?;
+                }
+                Some(_) => {
+                    return Err(anyhow!(
+                        "Team skill SSOT changed while recovery was pending; preserving all trees"
+                    ));
+                }
+            }
+        } else {
+            if backup_hash.is_some() {
+                return Err(anyhow!(
+                    "unexpected Team skill SSOT backup; preserving transaction state"
+                ));
+            }
+            match destination_hash.as_deref() {
+                None => {}
+                Some(hash) if hash == journal.target_tree_hash => {
+                    if Self::team_skill_tree_hash(&paths.stage, hash_tree)?.is_some() {
+                        return Err(anyhow!(
+                            "Team skill SSOT stage unexpectedly exists; preserving all trees"
+                        ));
+                    }
+                    fs::rename(destination, &paths.stage)?;
+                }
+                Some(_) => {
+                    return Err(anyhow!(
+                        "Team skill SSOT changed while recovery was pending; preserving it"
+                    ));
+                }
+            }
+        }
+
+        let restored_hash = Self::team_skill_tree_hash(destination, hash_tree)?;
+        if restored_hash != journal.expected_old_tree_hash {
+            return Err(anyhow!(
+                "Team skill SSOT could not be restored to its expected tree"
+            ));
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "team")]
+    fn execute_team_skill_ssot_transaction<H, S, P>(
+        journal: &TeamSkillSsotJournal,
+        source: &Path,
+        destination: &Path,
+        paths: &TeamSkillSsotPaths,
+        hash_tree: &H,
+        save_skill: S,
+        failpoint: &P,
+    ) -> Result<InstalledSkill>
+    where
+        H: Fn(&Path) -> std::result::Result<String, String>,
+        S: FnOnce(&InstalledSkill) -> Result<()>,
+        P: Fn(TeamSkillSsotFailPoint) -> Result<()>,
+    {
+        let stage_hash = match Self::team_skill_tree_hash(&paths.stage, hash_tree) {
+            Ok(hash) => hash,
+            Err(hash_error) => {
+                Self::ensure_plain_team_stage_tree(&paths.stage).with_context(|| {
+                    format!("Team skill SSOT partial stage could not be reused ({hash_error:#})")
+                })?;
+                Self::remove_path(&paths.stage)?;
+                None
+            }
+        };
+        match stage_hash {
+            Some(hash) if hash == journal.target_tree_hash => {}
+            Some(_) => {
+                // The journal was durable before this operation-owned path was
+                // created, so a non-target stage is a partial copy from a prior
+                // process exit. No destination or backup tree is removed here.
+                Self::ensure_plain_team_stage_tree(&paths.stage)?;
+                Self::remove_path(&paths.stage)?;
+                Self::copy_team_skill_stage(journal, source, &paths.stage, hash_tree)?;
+            }
+            None => Self::copy_team_skill_stage(journal, source, &paths.stage, hash_tree)?,
+        }
+        failpoint(TeamSkillSsotFailPoint::Staged)?;
+
+        if Self::team_skill_tree_hash(destination, hash_tree)? != journal.expected_old_tree_hash {
+            return Err(anyhow!(
+                "Team skill SSOT changed before replacement; preserving it"
+            ));
+        }
+        if Self::team_skill_tree_hash(&paths.backup, hash_tree)?.is_some() {
+            return Err(anyhow!(
+                "unexpected Team skill SSOT backup; preserving transaction state"
+            ));
+        }
+
+        if journal.had_destination {
+            fs::rename(destination, &paths.backup)?;
+        }
+        failpoint(TeamSkillSsotFailPoint::OldRenamed)?;
+
+        if let Err(error) = fs::rename(&paths.stage, destination) {
+            Self::restore_team_skill_ssot_a(journal, destination, paths, hash_tree).with_context(
+                || format!("Team skill SSOT install failed ({error}) and rollback failed"),
+            )?;
+            return Err(error.into());
+        }
+        failpoint(TeamSkillSsotFailPoint::NewRenamed)?;
+
+        if Self::team_skill_tree_hash(destination, hash_tree)?.as_deref()
+            != Some(journal.target_tree_hash.as_str())
+        {
+            Self::restore_team_skill_ssot_a(journal, destination, paths, hash_tree)
+                .context("Team skill SSOT target validation failed and rollback failed")?;
+            return Err(anyhow!("Team skill SSOT target validation failed"));
+        }
+
+        if let Err(error) = save_skill(&journal.target_skill) {
+            Self::restore_team_skill_ssot_a(journal, destination, paths, hash_tree).with_context(
+                || format!("Team skill catalog update failed ({error:#}) and rollback failed"),
+            )?;
+            if let Err(cleanup_error) =
+                Self::cleanup_team_skill_ssot_transaction(journal, paths, hash_tree)
+            {
+                log::warn!(
+                    "Team skill '{}' rolled back but transaction cleanup is incomplete: {cleanup_error:#}",
+                    journal.skill_id
+                );
+            }
+            return Err(error);
+        }
+        if Self::team_skill_tree_hash(destination, hash_tree)?.as_deref()
+            != Some(journal.target_tree_hash.as_str())
+        {
+            return Err(anyhow!(
+                "Team skill SSOT changed while its catalog was committing; preserving all trees"
+            ));
+        }
+        failpoint(TeamSkillSsotFailPoint::DatabaseSaved)?;
+
+        if let Err(error) = Self::cleanup_team_skill_ssot_transaction(journal, paths, hash_tree) {
+            log::warn!(
+                "Team skill '{}' committed but transaction cleanup is incomplete: {error:#}",
+                journal.skill_id
+            );
+        }
+        Ok(journal.target_skill.clone())
+    }
+
+    #[cfg(feature = "team")]
+    fn copy_team_skill_stage<H>(
+        journal: &TeamSkillSsotJournal,
+        source: &Path,
+        stage: &Path,
+        hash_tree: &H,
+    ) -> Result<()>
+    where
+        H: Fn(&Path) -> std::result::Result<String, String>,
+    {
+        Self::validate_sync_source_dir(source, &journal.directory)?;
+        if Self::team_skill_tree_hash(source, hash_tree)?.as_deref()
+            != Some(journal.target_tree_hash.as_str())
+        {
+            return Err(anyhow!(
+                "Team skill source changed before SSOT staging; preserving it"
+            ));
+        }
+        if let Err(error) = Self::copy_dir_recursive(source, stage) {
+            return Err(error.context("failed to stage Team skill SSOT tree"));
+        }
+        if Self::team_skill_tree_hash(stage, hash_tree)?.as_deref()
+            != Some(journal.target_tree_hash.as_str())
+            || Self::team_skill_tree_hash(source, hash_tree)?.as_deref()
+                != Some(journal.target_tree_hash.as_str())
+        {
+            return Err(anyhow!(
+                "Team skill source changed during SSOT staging; preserving all trees"
+            ));
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "team")]
+    fn cleanup_team_skill_ssot_transaction<H>(
+        journal: &TeamSkillSsotJournal,
+        paths: &TeamSkillSsotPaths,
+        hash_tree: &H,
+    ) -> Result<()>
+    where
+        H: Fn(&Path) -> std::result::Result<String, String>,
+    {
+        if let Some(stage_hash) = Self::team_skill_tree_hash(&paths.stage, hash_tree)? {
+            if stage_hash != journal.target_tree_hash {
+                return Err(anyhow!(
+                    "Team skill SSOT stage changed; preserving transaction state"
+                ));
+            }
+            Self::remove_path(&paths.stage)?;
+        }
+        if let Some(backup_hash) = Self::team_skill_tree_hash(&paths.backup, hash_tree)? {
+            if journal.expected_old_tree_hash.as_deref() != Some(backup_hash.as_str()) {
+                return Err(anyhow!(
+                    "Team skill SSOT backup changed; preserving transaction state"
+                ));
+            }
+            Self::remove_path(&paths.backup)?;
+        }
+        if paths.journal_tmp.exists() {
+            let metadata = paths.journal_tmp.symlink_metadata()?;
+            if Self::team_metadata_is_link_or_reparse(&metadata) || !metadata.is_file() {
+                return Err(anyhow!(
+                    "Team skill SSOT journal temporary path changed; preserving it"
+                ));
+            }
+            fs::remove_file(&paths.journal_tmp)?;
+        }
+        let journal_metadata = paths.journal.symlink_metadata()?;
+        if Self::team_metadata_is_link_or_reparse(&journal_metadata) || !journal_metadata.is_file()
+        {
+            return Err(anyhow!(
+                "Team skill SSOT journal path changed; preserving it"
+            ));
+        }
+        fs::remove_file(&paths.journal)?;
+        fs::remove_dir(&paths.operation_dir)?;
+        if let Some(transaction_root) = paths.operation_dir.parent() {
+            let _ = fs::remove_dir(transaction_root);
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "team")]
+    pub fn remove_team_managed(
+        db: &Arc<Database>,
+        app: &AppType,
+        id: &str,
+        directory: &str,
+    ) -> Result<()> {
+        let _state_guard = skill_state_write_guard();
+        if !id.starts_with("nexusops-team:") || !directory.starts_with("nexusops-") {
+            return Err(anyhow!("invalid NexusOps Team skill identity"));
+        }
+        let directory = Self::require_valid_directory(directory)?;
+        let Some(mut skill) = db.get_installed_skill(id)? else {
+            return Ok(());
+        };
+        if skill.directory != directory {
+            return Err(anyhow!("Team skill identity does not match its directory"));
+        }
+        skill.apps.set_enabled_for(app, false);
+        // Preserve the SSOT directory even when no app remains enabled. A
+        // disconnect or local backup restore must never delete developer files;
+        // the inactive catalog row also keeps the copy discoverable for undo.
+        db.save_skill(&skill).map_err(Into::into)
     }
 
     fn paths_alias(left: &Path, right: &Path) -> bool {
@@ -3385,7 +4179,7 @@ impl SkillService {
         skill: &InstalledSkill,
         excluded_path: Option<&Path>,
     ) -> Result<Option<PathBuf>> {
-        // 返回值会被整目录复制进 ~/.cc-switch/skill-backups/ 并由 get_skill_backups
+        // 返回值会被整目录复制进 ~/.nexusops-client/skill-backups/ 并由 get_skill_backups
         // 在界面上列出——脏 directory 在这里等于任意文件读取 + 外泄通道。
         let directory = Self::require_valid_directory(&skill.directory)?;
 
@@ -4801,6 +5595,430 @@ mod tests {
         .expect("write SKILL.md");
     }
 
+    #[cfg(feature = "team")]
+    fn strict_team_test_hash(path: &Path) -> std::result::Result<String, String> {
+        if !path.join("SKILL.md").is_file() {
+            return Err("the Team Skill directory is missing SKILL.md".into());
+        }
+        SkillService::compute_pi_deployment_hash(path).map_err(|error| error.to_string())
+    }
+
+    #[cfg(feature = "team")]
+    fn team_test_operation_dir(operation: &str) -> PathBuf {
+        SkillService::get_ssot_dir()
+            .expect("SSOT")
+            .join(TEAM_SKILL_SSOT_TRANSACTION_DIR)
+            .join(operation)
+    }
+
+    #[cfg(feature = "team")]
+    #[test]
+    #[serial_test::serial]
+    fn team_skill_ssot_transaction_recovers_every_durable_boundary() {
+        for interrupted_at in [
+            TeamSkillSsotFailPoint::Staged,
+            TeamSkillSsotFailPoint::OldRenamed,
+            TeamSkillSsotFailPoint::NewRenamed,
+            TeamSkillSsotFailPoint::DatabaseSaved,
+        ] {
+            let temp = tempdir().expect("tempdir");
+            let _home = TestHomeGuard::set(temp.path());
+            let _location = StorageLocationGuard::set(SkillStorageLocation::CcSwitch);
+            let db = Arc::new(Database::memory().expect("memory db"));
+            let id = "nexusops-team:test:skill:1";
+            let directory = "nexusops-recovery";
+            let operation = uuid::Uuid::new_v4().to_string();
+            let source = SkillService::get_app_skills_dir(&AppType::Codex)
+                .expect("app skills")
+                .join(directory);
+            let destination = SkillService::get_ssot_dir().expect("SSOT").join(directory);
+            write_skill(&source, "target");
+            write_skill(&destination, "old");
+            fs::write(source.join(".strict"), "target hidden").expect("write target hidden");
+            fs::write(destination.join(".strict"), "old hidden").expect("write old hidden");
+            let old_hash = strict_team_test_hash(&destination).expect("old hash");
+            let target_hash = strict_team_test_hash(&source).expect("target hash");
+            let previous = poisoned_skill(id, directory);
+            db.save_skill(&previous).expect("seed catalog");
+
+            let first_old_hash = old_hash.clone();
+            let first = SkillService::register_team_managed_inner(
+                &db,
+                &AppType::Codex,
+                id,
+                directory,
+                "target",
+                "content-target",
+                &operation,
+                move || Ok(Some(first_old_hash)),
+                strict_team_test_hash,
+                |skill| db.save_skill(skill).map_err(Into::into),
+                |point| {
+                    if point == interrupted_at {
+                        Err(anyhow!("simulated process exit at {point:?}"))
+                    } else {
+                        Ok(())
+                    }
+                },
+            );
+            assert!(first.is_err(), "{interrupted_at:?} must interrupt the call");
+            assert!(
+                team_test_operation_dir(&operation)
+                    .join("journal.json")
+                    .is_file(),
+                "{interrupted_at:?} must leave a durable journal"
+            );
+
+            let retry_old_hash = old_hash.clone();
+            let installed = SkillService::register_team_managed_inner(
+                &db,
+                &AppType::Codex,
+                id,
+                directory,
+                "target",
+                "content-target",
+                &operation,
+                move || Ok(Some(retry_old_hash)),
+                strict_team_test_hash,
+                |skill| db.save_skill(skill).map_err(Into::into),
+                |_| Ok(()),
+            )
+            .unwrap_or_else(|error| panic!("recover {interrupted_at:?}: {error:#}"));
+
+            assert_eq!(installed.content_hash.as_deref(), Some("content-target"));
+            assert!(installed.apps.codex);
+            assert_eq!(
+                strict_team_test_hash(&destination).expect("committed hash"),
+                target_hash
+            );
+            assert_eq!(
+                db.get_installed_skill(id)
+                    .expect("read catalog")
+                    .expect("catalog row")
+                    .content_hash
+                    .as_deref(),
+                Some("content-target")
+            );
+            assert!(
+                !team_test_operation_dir(&operation).exists(),
+                "{interrupted_at:?} recovery must clean its transaction"
+            );
+        }
+    }
+
+    #[cfg(feature = "team")]
+    #[test]
+    #[serial_test::serial]
+    fn team_skill_ssot_database_failure_restores_old_tree_immediately() {
+        let temp = tempdir().expect("tempdir");
+        let _home = TestHomeGuard::set(temp.path());
+        let _location = StorageLocationGuard::set(SkillStorageLocation::CcSwitch);
+        let db = Arc::new(Database::memory().expect("memory db"));
+        let id = "nexusops-team:test:skill:2";
+        let directory = "nexusops-db-rollback";
+        let operation = uuid::Uuid::new_v4().to_string();
+        let source = SkillService::get_app_skills_dir(&AppType::Codex)
+            .expect("app skills")
+            .join(directory);
+        let destination = SkillService::get_ssot_dir().expect("SSOT").join(directory);
+        write_skill(&source, "target");
+        write_skill(&destination, "old");
+        let old_hash = strict_team_test_hash(&destination).expect("old hash");
+        let previous = poisoned_skill(id, directory);
+        db.save_skill(&previous).expect("seed catalog");
+
+        let expected_old_hash = old_hash.clone();
+        let error = SkillService::register_team_managed_inner(
+            &db,
+            &AppType::Codex,
+            id,
+            directory,
+            "target",
+            "content-target",
+            &operation,
+            move || Ok(Some(expected_old_hash)),
+            strict_team_test_hash,
+            |_| Err(anyhow!("injected database failure")),
+            |_| Ok(()),
+        )
+        .expect_err("database failure must fail registration");
+
+        assert!(error.to_string().contains("injected database failure"));
+        assert_eq!(
+            strict_team_test_hash(&destination).expect("rolled back hash"),
+            old_hash
+        );
+        assert_eq!(
+            db.get_installed_skill(id)
+                .expect("read catalog")
+                .expect("catalog row")
+                .content_hash,
+            previous.content_hash
+        );
+        assert!(!team_test_operation_dir(&operation).exists());
+    }
+
+    #[cfg(feature = "team")]
+    #[test]
+    #[serial_test::serial]
+    fn team_skill_ssot_recovery_replaces_a_plain_partial_stage() {
+        let temp = tempdir().expect("tempdir");
+        let _home = TestHomeGuard::set(temp.path());
+        let _location = StorageLocationGuard::set(SkillStorageLocation::CcSwitch);
+        let db = Arc::new(Database::memory().expect("memory db"));
+        let id = "nexusops-team:test:skill:partial";
+        let directory = "nexusops-partial-stage";
+        let operation = uuid::Uuid::new_v4().to_string();
+        let source = SkillService::get_app_skills_dir(&AppType::Codex)
+            .expect("app skills")
+            .join(directory);
+        let destination = SkillService::get_ssot_dir().expect("SSOT").join(directory);
+        write_skill(&source, "target");
+        write_skill(&destination, "old");
+        let old_hash = strict_team_test_hash(&destination).expect("old hash");
+        let target_hash = strict_team_test_hash(&source).expect("target hash");
+        db.save_skill(&poisoned_skill(id, directory))
+            .expect("seed catalog");
+
+        let first_old_hash = old_hash.clone();
+        SkillService::register_team_managed_inner(
+            &db,
+            &AppType::Codex,
+            id,
+            directory,
+            "target",
+            "content-target",
+            &operation,
+            move || Ok(Some(first_old_hash)),
+            strict_team_test_hash,
+            |skill| db.save_skill(skill).map_err(Into::into),
+            |point| {
+                if point == TeamSkillSsotFailPoint::Staged {
+                    Err(anyhow!("simulated process exit"))
+                } else {
+                    Ok(())
+                }
+            },
+        )
+        .expect_err("stage failpoint");
+        let stage = team_test_operation_dir(&operation).join("stage");
+        SkillService::remove_path(&stage).expect("replace completed stage with partial copy");
+        fs::create_dir(&stage).expect("partial stage root");
+        fs::write(stage.join("partial.txt"), "half copied").expect("partial stage file");
+
+        let retry_old_hash = old_hash.clone();
+        SkillService::register_team_managed_inner(
+            &db,
+            &AppType::Codex,
+            id,
+            directory,
+            "target",
+            "content-target",
+            &operation,
+            move || Ok(Some(retry_old_hash)),
+            strict_team_test_hash,
+            |skill| db.save_skill(skill).map_err(Into::into),
+            |_| Ok(()),
+        )
+        .expect("plain partial stage must be restaged");
+
+        assert_eq!(
+            strict_team_test_hash(&destination).expect("committed hash"),
+            target_hash
+        );
+        assert!(!team_test_operation_dir(&operation).exists());
+    }
+
+    #[cfg(feature = "team")]
+    #[test]
+    #[serial_test::serial]
+    fn team_skill_ssot_recovery_preserves_an_externally_edited_target() {
+        let temp = tempdir().expect("tempdir");
+        let _home = TestHomeGuard::set(temp.path());
+        let _location = StorageLocationGuard::set(SkillStorageLocation::CcSwitch);
+        let db = Arc::new(Database::memory().expect("memory db"));
+        let id = "nexusops-team:test:skill:3";
+        let directory = "nexusops-external-edit";
+        let operation = uuid::Uuid::new_v4().to_string();
+        let source = SkillService::get_app_skills_dir(&AppType::Codex)
+            .expect("app skills")
+            .join(directory);
+        let destination = SkillService::get_ssot_dir().expect("SSOT").join(directory);
+        write_skill(&source, "target");
+        write_skill(&destination, "old");
+        let old_hash = strict_team_test_hash(&destination).expect("old hash");
+        let previous = poisoned_skill(id, directory);
+        db.save_skill(&previous).expect("seed catalog");
+
+        let first_old_hash = old_hash.clone();
+        SkillService::register_team_managed_inner(
+            &db,
+            &AppType::Codex,
+            id,
+            directory,
+            "target",
+            "content-target",
+            &operation,
+            move || Ok(Some(first_old_hash)),
+            strict_team_test_hash,
+            |skill| db.save_skill(skill).map_err(Into::into),
+            |point| {
+                if point == TeamSkillSsotFailPoint::NewRenamed {
+                    Err(anyhow!("simulated process exit"))
+                } else {
+                    Ok(())
+                }
+            },
+        )
+        .expect_err("new rename failpoint");
+        fs::write(destination.join(".user-edit"), "preserve me").expect("external edit");
+
+        let retry_old_hash = old_hash.clone();
+        let retry = SkillService::register_team_managed_inner(
+            &db,
+            &AppType::Codex,
+            id,
+            directory,
+            "target",
+            "content-target",
+            &operation,
+            move || Ok(Some(retry_old_hash)),
+            strict_team_test_hash,
+            |skill| db.save_skill(skill).map_err(Into::into),
+            |_| Ok(()),
+        );
+
+        assert!(retry.is_err(), "an unknown target tree must stop recovery");
+        assert_eq!(
+            fs::read_to_string(destination.join(".user-edit")).expect("preserved edit"),
+            "preserve me"
+        );
+        assert!(team_test_operation_dir(&operation).join("backup").is_dir());
+        assert_eq!(
+            db.get_installed_skill(id)
+                .expect("read catalog")
+                .expect("catalog row")
+                .content_hash,
+            previous.content_hash
+        );
+    }
+
+    #[cfg(feature = "team")]
+    #[test]
+    #[serial_test::serial]
+    fn team_skill_ssot_recovery_preserves_a_catalog_cas_mismatch() {
+        let temp = tempdir().expect("tempdir");
+        let _home = TestHomeGuard::set(temp.path());
+        let _location = StorageLocationGuard::set(SkillStorageLocation::CcSwitch);
+        let db = Arc::new(Database::memory().expect("memory db"));
+        let id = "nexusops-team:test:skill:catalog-cas";
+        let directory = "nexusops-catalog-cas";
+        let operation = uuid::Uuid::new_v4().to_string();
+        let source = SkillService::get_app_skills_dir(&AppType::Codex)
+            .expect("app skills")
+            .join(directory);
+        let destination = SkillService::get_ssot_dir().expect("SSOT").join(directory);
+        write_skill(&source, "target");
+        write_skill(&destination, "old");
+        let old_hash = strict_team_test_hash(&destination).expect("old hash");
+        let previous = poisoned_skill(id, directory);
+        db.save_skill(&previous).expect("seed catalog");
+
+        let first_old_hash = old_hash.clone();
+        SkillService::register_team_managed_inner(
+            &db,
+            &AppType::Codex,
+            id,
+            directory,
+            "target",
+            "content-target",
+            &operation,
+            move || Ok(Some(first_old_hash)),
+            strict_team_test_hash,
+            |skill| db.save_skill(skill).map_err(Into::into),
+            |point| {
+                if point == TeamSkillSsotFailPoint::Staged {
+                    Err(anyhow!("simulated process exit"))
+                } else {
+                    Ok(())
+                }
+            },
+        )
+        .expect_err("stage failpoint");
+        let mut edited_catalog = previous.clone();
+        edited_catalog.name = "user catalog edit".into();
+        db.save_skill(&edited_catalog)
+            .expect("external catalog edit");
+
+        let retry = SkillService::register_team_managed_inner(
+            &db,
+            &AppType::Codex,
+            id,
+            directory,
+            "target",
+            "content-target",
+            &operation,
+            || panic!("catalog mismatch must stop before filesystem validation"),
+            strict_team_test_hash,
+            |skill| db.save_skill(skill).map_err(Into::into),
+            |_| Ok(()),
+        );
+
+        assert!(retry.is_err(), "catalog CAS mismatch must stop recovery");
+        assert_eq!(
+            strict_team_test_hash(&destination).expect("preserved old tree"),
+            old_hash
+        );
+        assert_eq!(
+            db.get_installed_skill(id)
+                .expect("read catalog")
+                .expect("catalog row")
+                .name,
+            "user catalog edit"
+        );
+        assert!(team_test_operation_dir(&operation).join("stage").is_dir());
+    }
+
+    #[cfg(feature = "team")]
+    #[test]
+    fn team_skill_catalog_cas_includes_pi_state() {
+        let left = poisoned_skill("nexusops-team:test:skill:4", "nexusops-pi-cas");
+        let mut right = left.clone();
+        right.apps.pi = true;
+
+        assert!(!SkillService::team_skill_catalog_eq(
+            Some(&left),
+            Some(&right)
+        ));
+    }
+
+    #[cfg(feature = "team")]
+    #[test]
+    #[serial_test::serial]
+    fn remove_team_skill_keeps_inactive_catalog_and_ssot() {
+        let temp = tempdir().expect("tempdir");
+        let _home = TestHomeGuard::set(temp.path());
+        let _location = StorageLocationGuard::set(SkillStorageLocation::CcSwitch);
+        let db = Arc::new(Database::memory().expect("memory db"));
+        let id = "nexusops-team:test:skill:5";
+        let directory = "nexusops-inactive";
+        let destination = SkillService::get_ssot_dir().expect("SSOT").join(directory);
+        write_skill(&destination, "keep");
+        let mut skill = poisoned_skill(id, directory);
+        skill.apps.codex = true;
+        db.save_skill(&skill).expect("seed catalog");
+
+        SkillService::remove_team_managed(&db, &AppType::Codex, id, directory)
+            .expect("disable team skill");
+
+        assert!(destination.is_dir());
+        let inactive = db
+            .get_installed_skill(id)
+            .expect("read catalog")
+            .expect("inactive row");
+        assert!(!inactive.apps.codex);
+    }
+
     #[test]
     #[serial_test::serial]
     fn pi_skill_state_follows_native_directory_presence() {
@@ -5415,7 +6633,7 @@ mod tests {
         let _guard = TestHomeGuard::set(temp.path());
 
         // 手工放置一个备份：meta.json 里的 directory 指向 SSOT 之外。
-        // SSOT 位于 {home}/.cc-switch/skills，"../../pwned-restore" 若生效会写到 {home}/pwned-restore。
+        // SSOT 位于 {home}/.nexusops-client/skills，"../../pwned-restore" 若生效会写到 {home}/pwned-restore。
         let backup_id = "20260727_120000_evil";
         let backup_dir = SkillService::get_backup_dir()
             .expect("backup dir")
@@ -5528,9 +6746,9 @@ mod tests {
     #[test]
     #[serial_test::serial]
     fn migrate_storage_safely_leaves_an_existing_pi_ssot_alias() {
-        let _location = StorageLocationGuard::set(SkillStorageLocation::Unified);
         let temp = tempdir().expect("tempdir");
         let _home = TestHomeGuard::set(temp.path());
+        let _location = StorageLocationGuard::set(SkillStorageLocation::Unified);
         let _pi_dir =
             crate::pi_config::test_support::TestAgentDir::at(&temp.path().join(".agents"));
 
@@ -5544,11 +6762,7 @@ mod tests {
 
         let result = SkillService::migrate_storage(&db, SkillStorageLocation::CcSwitch)
             .expect("migrate away from alias");
-        let new_source = temp
-            .path()
-            .join(".cc-switch")
-            .join("skills")
-            .join("test-skill");
+        let new_source = get_app_config_dir().join("skills").join("test-skill");
         let pi_skill = temp
             .path()
             .join(".agents")
@@ -5571,7 +6785,7 @@ mod tests {
         let _guard = TestHomeGuard::set(temp.path());
 
         // 模拟同步导入灌进来的脏数据：directory 含路径穿越（save_skill 不校验，
-        // 与 import_sql_string_for_sync 的效果一致）。SSOT = {home}/.cc-switch/skills，
+        // 与 import_sql_string_for_sync 的效果一致）。SSOT = {home}/.nexusops-client/skills，
         // "../../victim-uninstall" 解析为 {home}/victim-uninstall。
         let victim = temp.path().join("victim-uninstall");
         fs::create_dir_all(&victim).expect("create victim dir");
@@ -5658,8 +6872,11 @@ mod tests {
             .join("test-skill");
         fs::create_dir_all(pi_skill.parent().expect("Pi skills directory"))
             .expect("create Pi skills directory");
-        std::os::unix::fs::symlink(Path::new("../../.cc-switch/skills/test-skill"), &pi_skill)
-            .expect("create relative Pi symlink");
+        std::os::unix::fs::symlink(
+            Path::new("../../.nexusops-client/skills/test-skill"),
+            &pi_skill,
+        )
+        .expect("create relative Pi symlink");
 
         let result = SkillService::migrate_storage(&db, SkillStorageLocation::Unified)
             .expect("migrate storage");
