@@ -109,28 +109,21 @@ import AgentsDefaultsPanel from "@/components/openclaw/AgentsDefaultsPanel";
 import OpenClawHealthBanner from "@/components/openclaw/OpenClawHealthBanner";
 import HermesMemoryPanel from "@/components/hermes/HermesMemoryPanel";
 import { TeamPage } from "@/features/team/TeamPage";
+import { ClientShell } from "@/features/shell/ClientShell";
+import { ClientHomePage } from "@/features/shell/ClientHomePage";
+import { AssetLibraryPage } from "@/features/shell/AssetLibraryPage";
+import { ClientUsagePage } from "@/features/shell/ClientUsagePage";
+import {
+  VIEW_STORAGE_KEY,
+  restoreClientView,
+  parentViewFor,
+  type ClientView as View,
+} from "@/features/shell/navigation";
 import {
   APP_IDS,
   DEFAULT_VISIBLE_APPS,
   isProxyAppId,
 } from "@/config/appConfig";
-
-type View =
-  | "providers"
-  | "settings"
-  | "prompts"
-  | "skills"
-  | "skillsDiscovery"
-  | "mcp"
-  | "agents"
-  | "universal"
-  | "sessions"
-  | "workspace"
-  | "openclawEnv"
-  | "openclawTools"
-  | "openclawAgents"
-  | "hermesMemory"
-  | "team";
 
 interface SyncStatusUpdatedPayload {
   source?: string;
@@ -150,31 +143,8 @@ const getInitialApp = (): AppId => {
   return "claude";
 };
 
-const VIEW_STORAGE_KEY = "nexusops-client-last-view";
-const VALID_VIEWS: View[] = [
-  "providers",
-  "settings",
-  "prompts",
-  "skills",
-  "skillsDiscovery",
-  "mcp",
-  "agents",
-  "universal",
-  "sessions",
-  "workspace",
-  "openclawEnv",
-  "openclawTools",
-  "openclawAgents",
-  "hermesMemory",
-  "team",
-];
-
 const getInitialView = (): View => {
-  const saved = localStorage.getItem(VIEW_STORAGE_KEY) as View | null;
-  if (saved && VALID_VIEWS.includes(saved)) {
-    return saved;
-  }
-  return "providers";
+  return restoreClientView(localStorage.getItem(VIEW_STORAGE_KEY));
 };
 
 function App() {
@@ -689,13 +659,13 @@ function App() {
       if (document.body.style.overflow === "hidden") return;
 
       const view = currentViewRef.current;
-      if (view === "providers") return;
+      if (view === "providers" || view === "home") return;
       if (managementBusyRef.current) return;
 
       if (isTextEditableTarget(event.target)) return;
 
       event.preventDefault();
-      setCurrentView(view === "skillsDiscovery" ? "skills" : "providers");
+      setCurrentView(parentViewFor(view));
     };
 
     window.addEventListener("keydown", handleKeyDown);
@@ -1025,6 +995,24 @@ function App() {
   const renderContent = () => {
     const content = (() => {
       switch (currentView) {
+        case "home":
+          return (
+            <ClientHomePage
+              teamEnabled={teamEnabled}
+              activeApp={activeApp}
+              providerName={providers[currentProviderId]?.name}
+              onNavigate={navigateTo}
+            />
+          );
+        case "assetLibrary":
+          return (
+            <AssetLibraryPage
+              teamEnabled={teamEnabled}
+              onNavigate={navigateTo}
+            />
+          );
+        case "usage":
+          return <ClientUsagePage />;
         case "settings":
           return (
             <SettingsPage
@@ -1197,9 +1185,13 @@ function App() {
     );
   };
 
-  return (
+  function navigateTo(view: View) {
+    if (!managementBusy) setCurrentView(view);
+  }
+
+  const application = (
     <div
-      className="flex flex-col h-screen overflow-hidden bg-background text-foreground selection:bg-primary/30 pb-4"
+      className="client-main flex flex-col h-screen overflow-hidden bg-background text-foreground selection:bg-primary/30 pb-4"
       style={{ overflowX: "hidden", paddingTop: contentTopOffset }}
     >
       {(dragBarHeight > 0 || useAppWindowControls) && (
@@ -1278,7 +1270,7 @@ function App() {
       )}
 
       <header
-        className="fixed z-50 w-full transition-all duration-300 bg-background/80 backdrop-blur-md"
+        className="client-page-header fixed z-50 w-full transition-all duration-300 bg-background/80 backdrop-blur-md"
         {...DRAG_REGION_ATTR}
         style={
           {
@@ -1299,26 +1291,26 @@ function App() {
           >
             {currentView !== "providers" ? (
               <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  disabled={managementBusy}
-                  aria-label={t("common.back")}
-                  onClick={() =>
-                    setCurrentView(
-                      currentView === "skillsDiscovery"
-                        ? "skills"
-                        : "providers",
-                    )
-                  }
-                  className={cn(
-                    "mr-2 rounded-lg",
-                    managementBusy && "disabled:opacity-100",
-                  )}
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
+                {currentView !== "home" && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    disabled={managementBusy}
+                    aria-label={t("common.back")}
+                    onClick={() => navigateTo(parentViewFor(currentView))}
+                    className={cn(
+                      "mr-2 rounded-lg",
+                      managementBusy && "disabled:opacity-100",
+                    )}
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </Button>
+                )}
                 <h1 className="text-lg font-semibold">
+                  {currentView === "home" && t("clientNavigation.home")}
+                  {currentView === "assetLibrary" &&
+                    t("clientNavigation.assetLibrary")}
+                  {currentView === "usage" && t("clientNavigation.usage")}
                   {currentView === "settings" && t("settings.title")}
                   {currentView === "prompts" &&
                     t("prompts.title", {
@@ -1856,6 +1848,18 @@ function App() {
       <DeepLinkImportDialog />
       <FirstRunNoticeDialog />
     </div>
+  );
+  return (
+    <ClientShell
+      view={currentView}
+      activeApp={activeApp}
+      teamEnabled={teamEnabled}
+      busy={managementBusy}
+      titlebarHeight={dragBarHeight}
+      onNavigate={navigateTo}
+    >
+      {application}
+    </ClientShell>
   );
 }
 

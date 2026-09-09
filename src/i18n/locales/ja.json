@@ -1,4 +1,44 @@
 {
+  "clientNavigation": {
+    "home": "ワークスペース",
+    "providers": "ツール接続",
+    "assetLibrary": "アセット",
+    "usage": "使用記録",
+    "team": "組織とレポート",
+    "sidebar": "NexusOps ナビゲーション",
+    "primary": "ワークスペースのページ",
+    "preferences": "組織と環境設定",
+    "advanced": "詳細ツール",
+    "teamUnavailable": "このビルドではチーム機能が無効です。個人のツールは利用できます。",
+    "skillsDiscovery": "Skills を探す",
+    "teamAssets": "チームのアセット",
+    "personalAssets": "個人のアセット",
+    "open": "開く",
+    "openPage": "{{page}}を開く",
+    "prompts": "プロンプト"
+  },
+  "clientHome": {
+    "title": "AI ワークスペース",
+    "description": "ツールの接続とチームのアセットを確認し、本機の設定を管理します。",
+    "configureTools": "ツールを設定",
+    "organization": "組織への接続",
+    "lastVerification": "前回のサーバー確認",
+    "connectHint": "組織に接続するか、ご自身の Team Profile を読み込みます。接続だけではプロバイダーの切り替えや統計の送信は行いません。",
+    "connect": "組織に接続",
+    "readError": "保存された接続を読み込めません。組織設定で復旧してください。",
+    "currentTool": "現在のツール設定",
+    "noProvider": "プロバイダー未選択",
+    "configurationOnly": "保存された設定です。現在の接続状態を保証するものではありません。",
+    "assetsHint": "チームと個人のアセットの出所と所有権を分け、同期前に変更を確認できます。",
+    "teamAssetsHint": "許可された Stable バージョン、ローカル変更、復元履歴を確認します。",
+    "openAssets": "アセットを開く",
+    "status": {
+      "connected": "前回のサーバー確認は成功しました。",
+      "authentication_required": "保存された接続には再認証が必要です。",
+      "access_denied": "前回の確認ではアクセスが拒否されました。",
+      "unavailable": "前回の確認ではサーバーを利用できませんでした。"
+    }
+  },
   "app": {
     "title": "NexusOps Client",
     "description": "チーム AI 開発向けのデスクトップ接続・資産同期クライアント"

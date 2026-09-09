@@ -1,0 +1,124 @@
+.client-shell {
+  --client-sidebar-width: 208px;
+}
+.client-shell .client-main {
+  padding-left: var(--client-sidebar-width);
+}
+.client-shell .client-page-header {
+  left: var(--client-sidebar-width);
+  width: calc(100% - var(--client-sidebar-width));
+}
+.client-sidebar {
+  position: fixed;
+  z-index: 40;
+  top: var(--client-titlebar-height);
+  bottom: 0;
+  left: 0;
+  width: var(--client-sidebar-width);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  overflow-y: auto;
+  padding: 22px 14px 18px;
+  border-right: 1px solid hsl(var(--border));
+  background: hsl(var(--muted) / 0.45);
+}
+.client-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 8px 12px;
+  font-size: 17px;
+  font-weight: 650;
+}
+.client-brand img {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+}
+.client-sidebar nav {
+  display: grid;
+  gap: 5px;
+}
+.client-nav-button {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: hsl(var(--muted-foreground));
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: left;
+}
+.client-nav-button:hover:not(:disabled) {
+  background: hsl(var(--accent));
+  color: hsl(var(--foreground));
+}
+.client-nav-button[aria-current="page"] {
+  background: hsl(var(--primary) / 0.1);
+  color: hsl(var(--primary));
+  font-weight: 600;
+}
+.client-nav-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.client-nav-button svg {
+  flex-shrink: 0;
+}
+.client-nav-button:focus-visible,
+.client-advanced summary:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+.client-secondary {
+  margin-top: auto;
+  border-top: 1px solid hsl(var(--border));
+  padding-top: 16px;
+}
+.client-advanced {
+  padding-top: 6px;
+}
+.client-advanced summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  padding: 8px 10px;
+}
+.client-advanced nav {
+  margin-top: 8px;
+}
+.client-advanced .client-nav-button {
+  font-size: 12px;
+}
+@media (max-width: 1050px) {
+  .client-shell {
+    --client-sidebar-width: 176px;
+  }
+  .client-sidebar {
+    padding-inline: 10px;
+  }
+}
+@media (max-width: 740px) {
+  .client-shell {
+    --client-sidebar-width: 62px;
+  }
+  .client-sidebar {
+    padding-inline: 8px;
+  }
+  .client-sidebar .client-nav-label {
+    display: none;
+  }
+  .client-brand {
+    padding-inline: 8px;
+  }
+  .client-nav-button {
+    justify-content: center;
+    padding-inline: 8px;
+  }
+  .client-advanced {
+    display: none;
+  }
+}

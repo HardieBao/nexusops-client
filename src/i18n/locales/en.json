@@ -1,4 +1,44 @@
 {
+  "clientNavigation": {
+    "home": "Workspace",
+    "providers": "Tool connections",
+    "assetLibrary": "Asset library",
+    "usage": "Usage",
+    "team": "Organization & reporting",
+    "sidebar": "NexusOps navigation",
+    "primary": "Workspace pages",
+    "preferences": "Organization and preferences",
+    "advanced": "Advanced tools",
+    "teamUnavailable": "Team features are not enabled in this build.",
+    "skillsDiscovery": "Discover skills",
+    "teamAssets": "Team assets",
+    "personalAssets": "Personal assets",
+    "open": "Open",
+    "openPage": "Open {{page}}",
+    "prompts": "Prompts"
+  },
+  "clientHome": {
+    "title": "Your AI workspace",
+    "description": "Connect your tools, review team assets, and keep control of your local configuration.",
+    "configureTools": "Configure tools",
+    "organization": "Organization connection",
+    "lastVerification": "Last server check",
+    "connectHint": "Connect your organization or import your own Team Profile. Connecting does not switch your provider or enable reporting.",
+    "connect": "Connect organization",
+    "readError": "Could not read the saved connection. Open organization settings to recover.",
+    "currentTool": "Current tool configuration",
+    "noProvider": "No provider selected",
+    "configurationOnly": "Configuration shown here is not a live connection test.",
+    "assetsHint": "Team releases and personal assets keep their own source and ownership. Preview changes before syncing.",
+    "teamAssetsHint": "Review authorized stable releases, local changes, and recovery history.",
+    "openAssets": "Open asset library",
+    "status": {
+      "connected": "The last server check succeeded.",
+      "authentication_required": "The saved connection needs authentication.",
+      "access_denied": "Access was denied at the last check.",
+      "unavailable": "The server was unavailable at the last check."
+    }
+  },
   "app": {
     "title": "NexusOps Client",
     "description": "Desktop access and managed assets for team AI development"

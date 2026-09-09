@@ -204,9 +204,29 @@ describe("App integration with MSW", () => {
     toastErrorMock.mockReset();
     skillsPanelMocks.checkUpdates.mockReset();
     skillsPanelMocks.openDiscovery.mockReset();
-    localStorage.removeItem("nexusops-client-last-view");
+    localStorage.setItem("nexusops-client-last-view", "providers");
     localStorage.removeItem("nexusops-client-last-app");
   });
+
+  it("opens the workspace on first run and can reach provider configuration from the sidebar", async () => {
+    localStorage.removeItem("nexusops-client-last-view");
+    const { default: App } = await import("@/App");
+    renderApp(App);
+    expect(await screen.findByText("clientHome.title")).toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "firstRunNotice.confirm" }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "clientNavigation.providers" }),
+    );
+    expect(await screen.findByTestId("provider-list")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "clientNavigation.usage" }),
+    ).toBeEnabled();
+  }, 15_000);
 
   it("shows the Team entry only when the build feature is enabled", async () => {
     server.use(

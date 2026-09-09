@@ -1,0 +1,61 @@
+{
+  "sources": [
+    {
+      "path": "src/App.tsx",
+      "sha256": "b47ec730ffc4459773e685dfcfd7063054b551bf3b2d0532ee928410071d37aa"
+    },
+    {
+      "path": "src/features/shell/shell.css",
+      "sha256": "ae76d4282802df07e6a69ca606a434fd491fac9789c7a0439f0daaefb7e30cbc"
+    },
+    {
+      "path": "src/features/shell/navigation.ts",
+      "sha256": "845848c57c87865ec99c67f5131c53a6ed8c74d232612c29ab89169c641806ed"
+    },
+    {
+      "path": "src/features/shell/ClientUsagePage.tsx",
+      "sha256": "d76a2ddcdb0d6f49a4378b65ecbd9ce7d5150a43a24bd1d9a7baa2a9779ab520"
+    },
+    {
+      "path": "src/features/shell/ClientShell.tsx",
+      "sha256": "81701b57a68db24179e233a8f509db9c04fbb80e3a0def7c49464b778e55ddf7"
+    },
+    {
+      "path": "src/features/shell/ClientHomePage.tsx",
+      "sha256": "5a6a56821316d0a5730d3632503d3ab8b79cd7eb96c72f40857293700a3fb866"
+    },
+    {
+      "path": "src/features/shell/AssetLibraryPage.tsx",
+      "sha256": "a25fbf22fe0b826c76e23349c402d61807d6b9aeec308fac0ea410af8f8270ec"
+    },
+    {
+      "path": "src/i18n/locales/en.json",
+      "sha256": "95c3510be246ab4f946c93bec905032c71e68f8ba93fdcaf5b93351a4bbeae3c"
+    },
+    {
+      "path": "src/i18n/locales/zh.json",
+      "sha256": "ba30f94edf6acf67a29d7f9b9dd47c845906637b9c26089b5895d530cbb4679a"
+    },
+    {
+      "path": "src/i18n/locales/zh-TW.json",
+      "sha256": "db94ba4879f7856966f73dd28d655c77092eb21b93034ddaa9dca44f71547a1a"
+    },
+    {
+      "path": "src/i18n/locales/ja.json",
+      "sha256": "bfdaa00c6df5ef8b4532d12d0ed6971bbe3c8d2410d9517c9aace58c9811e7b0"
+    }
+  ],
+  "date": "2026-09-10T01:20:47.5284132+08:00",
+  "branch": "codex/client-teamai-refactor",
+  "baseline": "f811e352fe3904214a2b2305baff81964a416c56",
+  "tests": {
+    "targeted_passed": 39,
+    "frontend_passed": 1135,
+    "typecheck": "passed",
+    "browser": "real App with isolated IPC fixture; zero new page errors; no configuration mutations",
+    "frontend_files": 141,
+    "renderer_build": "passed",
+    "native": "not yet executed for shell changes"
+  },
+  "scope": "T03 partial shell checkpoint"
+}

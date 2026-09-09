@@ -1,4 +1,44 @@
 {
+  "clientNavigation": {
+    "home": "工作台",
+    "providers": "工具接入",
+    "assetLibrary": "資產庫",
+    "usage": "使用紀錄",
+    "team": "組織與回報",
+    "sidebar": "NexusOps 導覽",
+    "primary": "工作台頁面",
+    "preferences": "組織與偏好",
+    "advanced": "進階工具",
+    "teamUnavailable": "此版本未啟用團隊功能，個人工具仍可使用。",
+    "skillsDiscovery": "探索 Skills",
+    "teamAssets": "團隊資產",
+    "personalAssets": "個人資產",
+    "open": "開啟",
+    "openPage": "開啟{{page}}",
+    "prompts": "提示詞"
+  },
+  "clientHome": {
+    "title": "你的 AI 工作台",
+    "description": "連接開發工具、查看團隊資產，保留對本機設定的控制。",
+    "configureTools": "設定工具",
+    "organization": "組織連線",
+    "lastVerification": "上次伺服器驗證",
+    "connectHint": "連接組織或匯入本人的 Team Profile。連接不會自動切換供應商或啟用統計回報。",
+    "connect": "連接組織",
+    "readError": "無法讀取已儲存的組織連線，請開啟組織設定進行復原。",
+    "currentTool": "目前工具設定",
+    "noProvider": "尚未選擇供應商",
+    "configurationOnly": "此處顯示已儲存設定，不代表即時連線檢查結果。",
+    "assetsHint": "團隊發佈與個人資產分別保留來源與所有權，同步前可預覽變更。",
+    "teamAssetsHint": "查看授權的 Stable 版本、本機修改與復原紀錄。",
+    "openAssets": "開啟資產庫",
+    "status": {
+      "connected": "上次伺服器驗證成功。",
+      "authentication_required": "已儲存的連線需要重新驗證。",
+      "access_denied": "上次驗證時存取遭拒。",
+      "unavailable": "上次驗證時伺服器無法使用。"
+    }
+  },
   "app": {
     "title": "NexusOps Client",
     "description": "團隊 AI 程式開發的桌面接入與資產同步客戶端"

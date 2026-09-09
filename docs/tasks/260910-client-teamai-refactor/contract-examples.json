@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "purpose": "规范样例，非已运行的服务端结果；全部使用合成 ID",
+  "worker": [
+    {"name":"inspect skill", "request":{"schema_version":1,"request_id":"fixture-1","operation":"inspect_skill","input":{"root":"<selected-temporary-directory>","entry":"SKILL.md"}},"expected":{"schema_version":1,"request_id":"fixture-1","ok":true,"data":{"kind":"skill","name":"sample","entry":"SKILL.md","files":[{"path":"SKILL.md","size":120}]}}},
+    {"name":"cancel", "expected":{"schema_version":1,"request_id":"fixture-1","ok":false,"error":{"code":"cancelled","message":"Operation cancelled"}}},
+    {"name":"timeout", "expected":{"schema_version":1,"request_id":"fixture-1","ok":false,"error":{"code":"timeout","message":"Resource inspection timed out"}}},
+    {"name":"escape", "request":{"schema_version":1,"request_id":"fixture-2","operation":"inspect_skill","input":{"root":"<selected-temporary-directory>","entry":"../../private"}},"error_code":"unsafe_path","writes":0}
+  ],
+  "http": [
+    {"name":"current project", "method":"GET","path":"/api/v1/me/teamai/projects","status":200,"response":{"code":0,"data":{"schema_version":1,"projects":[{"id":1,"name":"Synthetic team","organization_id":"fixture-org","workspace_id":"fixture-workspace","member_id":17}]}}},
+    {"name":"sync selection", "method":"POST","path":"/api/v1/me/teamai/sync","body":{"schema_version":1,"project_id":1,"runtime":"codex","asset_ids":[10,11]},"status":200,"expectation":"Only approved current stable revisions for both authorized IDs; no local writes before confirmation"},
+    {"name":"unknown fields", "method":"POST","path":"/api/v1/me/teamai/report","body":{"schema_version":1,"project_id":1,"runtime":"codex","bridge_version":"0.1.0","host_name":"must-not-upload"},"status":400},
+    {"name":"missing credential","method":"GET","path":"/api/v1/me/teamai/projects","status":401},
+    {"name":"suspended workspace","method":"POST","path":"/api/v1/me/teamai/sync","status":403},
+    {"name":"foreign command","method":"POST","path":"/api/v1/me/teamai/ack","status":404,"database_changes":0},
+    {"name":"expired command","method":"POST","path":"/api/v1/me/teamai/ack","status":409},
+    {"name":"too many assets","method":"POST","path":"/api/v1/me/teamai/sync","status":413},
+    {"name":"rate limited","method":"POST","path":"/api/v1/me/teamai/report","status":429,"expectation":"Respect Retry-After with bounded retry; no alternate-origin credential forwarding"},
+    {"name":"dependency unavailable","method":"POST","path":"/api/v1/me/teamai/sync","status":503}
+  ]
+}

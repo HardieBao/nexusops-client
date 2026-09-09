@@ -1,4 +1,44 @@
 {
+  "clientNavigation": {
+    "home": "工作台",
+    "providers": "工具接入",
+    "assetLibrary": "资产库",
+    "usage": "使用记录",
+    "team": "组织与上报",
+    "sidebar": "NexusOps 导航",
+    "primary": "工作台页面",
+    "preferences": "组织与偏好",
+    "advanced": "高级工具",
+    "teamUnavailable": "此构建未启用团队功能，个人工具仍可使用。",
+    "skillsDiscovery": "发现 Skills",
+    "teamAssets": "团队资产",
+    "personalAssets": "个人资产",
+    "open": "打开",
+    "openPage": "打开{{page}}",
+    "prompts": "提示词"
+  },
+  "clientHome": {
+    "title": "你的 AI 工作台",
+    "description": "连接开发工具，查看团队资产，保留对本机配置的控制。",
+    "configureTools": "配置工具",
+    "organization": "组织连接",
+    "lastVerification": "上次服务端验证",
+    "connectHint": "连接组织或导入本人的 Team Profile。连接不会自动切换供应商或启用统计上报。",
+    "connect": "连接组织",
+    "readError": "无法读取已保存的组织连接，请打开组织设置恢复。",
+    "currentTool": "当前工具配置",
+    "noProvider": "尚未选择供应商",
+    "configurationOnly": "这里展示已保存配置，不代表实时连接检测结果。",
+    "assetsHint": "团队发布与个人资产分别保留来源和所有权，同步前可以预览变更。",
+    "teamAssetsHint": "查看授权的 Stable 版本、本地修改和恢复记录。",
+    "openAssets": "打开资产库",
+    "status": {
+      "connected": "上次服务端验证成功。",
+      "authentication_required": "已保存的连接需要重新认证。",
+      "access_denied": "上次验证时访问被拒绝。",
+      "unavailable": "上次验证时服务端不可用。"
+    }
+  },
   "app": {
     "title": "NexusOps Client",
     "description": "团队 AI 编程的桌面接入与资产同步客户端"
