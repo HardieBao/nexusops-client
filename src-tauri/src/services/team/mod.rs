@@ -5,6 +5,7 @@ pub mod install;
 pub mod provider;
 pub mod state;
 pub mod sync;
+pub mod tool_usage;
 pub mod types;
 
 use std::{path::Path, sync::Arc};
@@ -18,6 +19,7 @@ use state::TeamState;
 use types::{ConnectionStatus, Manifest, ManifestItem, TeamConnection, TeamError, TeamProfile};
 
 pub struct TeamService {
+    pub tool_usage: tool_usage::UsageStore,
     pub state: TeamState,
     credentials: Arc<dyn CredentialStore>,
     operation: tokio::sync::Mutex<()>,
@@ -37,6 +39,7 @@ impl TeamService {
         let state = TeamState::open(data_dir)?;
         sync::recover_known_installs(&state)?;
         Ok(Self {
+            tool_usage: tool_usage::UsageStore::open(data_dir)?,
             state,
             credentials,
             operation: tokio::sync::Mutex::new(()),
@@ -95,6 +98,7 @@ impl TeamService {
             return Err(TeamError::Cancelled);
         }
         let id = connection_id(api.gateway_url(), &profile)?;
+        self.tool_usage.bind_connection(&id)?;
         let previous_key = self.credentials.get(&id)?;
         self.credentials.set(&id, key)?;
         let connection = TeamConnection {
@@ -230,6 +234,7 @@ impl TeamService {
     pub(crate) async fn disconnect_locked(&self) -> Result<(), TeamError> {
         let _operation = self.operation.lock().await;
         if let Some(connection) = self.state.connection()? {
+            self.tool_usage.configure(&connection.id, false)?;
             self.credentials.delete(&connection.id)?;
             self.state.disconnect(&connection.id)?;
             *self

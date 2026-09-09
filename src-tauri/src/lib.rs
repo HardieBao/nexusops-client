@@ -31,6 +31,8 @@ mod prompt_files;
 mod provider;
 mod proxy;
 mod services;
+#[cfg(feature = "team")]
+pub use services::team::tool_usage::run_hook as run_tool_usage_hook;
 mod session_manager;
 mod settings;
 mod store;
@@ -1393,6 +1395,9 @@ pub fn run() {
             commands::switch_provider,
             commands::team_feature_enabled,
             commands::team_status,
+            commands::team_tool_usage_status,
+            commands::team_configure_tool_usage,
+            commands::team_upload_tool_usage,
             commands::team_connect,
             commands::team_refresh,
             commands::team_cancel,

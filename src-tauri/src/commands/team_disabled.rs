@@ -1,6 +1,19 @@
 const DISABLED: &str = "The NexusOps Team feature is disabled in this build";
 
 #[tauri::command]
+pub fn team_tool_usage_status() -> Result<serde_json::Value, String> {
+    Err(DISABLED.into())
+}
+#[tauri::command]
+pub async fn team_configure_tool_usage(_enabled: bool) -> Result<serde_json::Value, String> {
+    Err(DISABLED.into())
+}
+#[tauri::command]
+pub async fn team_upload_tool_usage() -> Result<serde_json::Value, String> {
+    Err(DISABLED.into())
+}
+
+#[tauri::command]
 pub fn team_feature_enabled() -> bool {
     false
 }

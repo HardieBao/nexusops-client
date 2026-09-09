@@ -29,8 +29,21 @@ impl TeamServiceState {
                 log::warn!("Team upstream recovery was deferred: {error}");
             }
         });
+        let service = service.map(Arc::new).map_err(TeamCommandError::from);
+        if let Ok(service) = &service {
+            let weak = Arc::downgrade(service);
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+                    let Some(service) = weak.upgrade() else {
+                        break;
+                    };
+                    let _ = service.upload_tool_usage().await;
+                }
+            });
+        }
         Self {
-            service: service.map(Arc::new).map_err(TeamCommandError::from),
+            service,
             current_operation: Mutex::new(None),
         }
     }
@@ -100,6 +113,40 @@ pub struct TeamRefresh {
 #[tauri::command]
 pub fn team_feature_enabled() -> bool {
     true
+}
+
+#[tauri::command]
+pub fn team_tool_usage_status(
+    team: State<'_, TeamServiceState>,
+) -> Result<crate::services::team::tool_usage::UsageStatus, TeamCommandError> {
+    let service = team.service()?;
+    let connection = service.status()?.ok_or(TeamError::NotConnected)?;
+    service
+        .tool_usage
+        .status(&connection.id)
+        .map_err(Into::into)
+}
+
+#[tauri::command]
+pub async fn team_configure_tool_usage(
+    team: State<'_, TeamServiceState>,
+    enabled: bool,
+) -> Result<crate::services::team::tool_usage::UsageStatus, TeamCommandError> {
+    let service = team.service()?;
+    service
+        .configure_tool_usage(enabled)
+        .await
+        .map_err(Into::into)
+}
+
+#[tauri::command]
+pub async fn team_upload_tool_usage(
+    team: State<'_, TeamServiceState>,
+) -> Result<crate::services::team::tool_usage::UsageStatus, TeamCommandError> {
+    team.service()?
+        .upload_tool_usage()
+        .await
+        .map_err(Into::into)
 }
 
 #[tauri::command]

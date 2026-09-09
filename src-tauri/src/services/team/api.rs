@@ -88,6 +88,30 @@ fn checked_url(input: &str) -> Result<Url, TeamError> {
 }
 
 impl TeamApi {
+    pub async fn upload_tool_usage(
+        &self,
+        key: &str,
+        events: &[super::tool_usage::UsageEvent],
+        cancel: &Cancellation,
+    ) -> Result<(), TeamError> {
+        let mut credential =
+            HeaderValue::from_str(key).map_err(|_| TeamError::AuthenticationRequired)?;
+        credential.set_sensitive(true);
+        let result = tokio::select! {
+            _ = cancel.cancelled() => return Err(TeamError::Cancelled),
+            response = self.client.post(self.endpoint("api/v1/me/tool-usage")?)
+                .header("X-Nexus-Member-Key", credential)
+                .json(&serde_json::json!({"events":events})).send() => response.map_err(transport_error)?,
+        };
+        match result.status() {
+            StatusCode::NO_CONTENT => Ok(()),
+            StatusCode::UNAUTHORIZED => Err(TeamError::AuthenticationRequired),
+            StatusCode::FORBIDDEN => Err(TeamError::AccessDenied),
+            status if status.is_redirection() => Err(TeamError::Redirect),
+            _ => Err(TeamError::Unavailable),
+        }
+    }
+
     pub fn new(gateway: &str) -> Result<Self, TeamError> {
         Self::with_timeout(gateway, Duration::from_secs(30))
     }
