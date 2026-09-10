@@ -1,0 +1,13 @@
+{
+  "baseline_commit": "f811e352fe3904214a2b2305baff81964a416c56",
+  "candidate_commit": "4d33d55d2a771f74d7f1a2ef86fc5f614d169953",
+  "provider_preserved": true,
+  "current_provider_preserved": true,
+  "usage_preferences_preserved": true,
+  "live_file_unchanged": true,
+  "live_file_existed": true,
+  "binary_hashes": [
+    "6d14939a7328010602c6b825375d9dee38e0a86e9824cf1d2a2f55fdc4e18d59",
+    "56ff2f7c81f27cd13cd57131e7634fecd1330931768356f88e941eec959e74ba"
+  ]
+}

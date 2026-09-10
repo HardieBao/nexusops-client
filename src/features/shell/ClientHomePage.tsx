@@ -78,7 +78,7 @@ export function ClientHomePage({
           />
         ) : connection ? (
           <>
-            <p className="mt-4 text-lg font-medium">
+            <p className="mt-4 break-words text-lg font-medium">
               {connection.profile.name}
             </p>
             <p className="mt-2 text-sm text-muted-foreground">

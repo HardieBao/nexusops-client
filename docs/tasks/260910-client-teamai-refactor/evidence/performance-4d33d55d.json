@@ -1,0 +1,93 @@
+{
+  "hashes": {
+    "baseline": "6d14939a7328010602c6b825375d9dee38e0a86e9824cf1d2a2f55fdc4e18d59",
+    "candidate": "56ff2f7c81f27cd13cd57131e7634fecd1330931768356f88e941eec959e74ba"
+  },
+  "samples": [
+    {
+      "version": "baseline",
+      "iteration": 1,
+      "observed_ready_ms": 873.9,
+      "process_tree_working_set_bytes": 453566464,
+      "process_count": 7
+    },
+    {
+      "version": "candidate",
+      "iteration": 1,
+      "observed_ready_ms": 955.5,
+      "process_tree_working_set_bytes": 440991744,
+      "process_count": 7
+    },
+    {
+      "version": "baseline",
+      "iteration": 2,
+      "observed_ready_ms": 831.6,
+      "process_tree_working_set_bytes": 450314240,
+      "process_count": 7
+    },
+    {
+      "version": "candidate",
+      "iteration": 2,
+      "observed_ready_ms": 888.2,
+      "process_tree_working_set_bytes": 442134528,
+      "process_count": 7
+    },
+    {
+      "version": "baseline",
+      "iteration": 3,
+      "observed_ready_ms": 874.1,
+      "process_tree_working_set_bytes": 452866048,
+      "process_count": 7
+    },
+    {
+      "version": "candidate",
+      "iteration": 3,
+      "observed_ready_ms": 886.8,
+      "process_tree_working_set_bytes": 441110528,
+      "process_count": 7
+    },
+    {
+      "version": "baseline",
+      "iteration": 4,
+      "observed_ready_ms": 880.5,
+      "process_tree_working_set_bytes": 450281472,
+      "process_count": 7
+    },
+    {
+      "version": "candidate",
+      "iteration": 4,
+      "observed_ready_ms": 948.3,
+      "process_tree_working_set_bytes": 441991168,
+      "process_count": 7
+    },
+    {
+      "version": "baseline",
+      "iteration": 5,
+      "observed_ready_ms": 821.1,
+      "process_tree_working_set_bytes": 449822720,
+      "process_count": 7
+    },
+    {
+      "version": "candidate",
+      "iteration": 5,
+      "observed_ready_ms": 957.7,
+      "process_tree_working_set_bytes": 442097664,
+      "process_count": 7
+    }
+  ],
+  "summary": {
+    "baseline": {
+      "ready_ms_median": 873.9,
+      "working_set_bytes_median": 450314240
+    },
+    "candidate": {
+      "ready_ms_median": 948.3,
+      "working_set_bytes_median": 441991168
+    },
+    "ready_ratio": 1.0851355990387916,
+    "working_set_ratio": 0.9815171911951974
+  },
+  "method": "Five alternating new-process launches per version, empty app/WebView data directories. Readiness is first visible enabled control; includes automation probe overhead. Working set sums native app and descendant processes after three idle seconds and may double-count shared pages. No OS disk-cache flush. Fixture directories retained.",
+  "baseline_commit": "f811e352fe3904214a2b2305baff81964a416c56",
+  "candidate_commit": "4d33d55d2a771f74d7f1a2ef86fc5f614d169953"
+}

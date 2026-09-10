@@ -1,0 +1,770 @@
+[
+  {
+    "language": "zh",
+    "view": "home",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "工作台",
+    "pass": true
+  },
+  {
+    "language": "zh",
+    "view": "home",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "工作台",
+    "pass": true
+  },
+  {
+    "language": "zh",
+    "view": "team",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "组织与上报",
+    "pass": true
+  },
+  {
+    "language": "zh",
+    "view": "team",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "组织与上报",
+    "pass": true
+  },
+  {
+    "language": "zh",
+    "view": "teamAssets",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "团队资产",
+    "pass": true
+  },
+  {
+    "language": "zh",
+    "view": "teamAssets",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "团队资产",
+    "pass": true
+  },
+  {
+    "language": "zh",
+    "view": "teamProviders",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "团队供应商",
+    "pass": true
+  },
+  {
+    "language": "zh",
+    "view": "teamProviders",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "团队供应商",
+    "pass": true
+  },
+  {
+    "language": "zh",
+    "view": "assetLibrary",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "资产库",
+    "pass": true
+  },
+  {
+    "language": "zh",
+    "view": "assetLibrary",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "资产库",
+    "pass": true
+  },
+  {
+    "language": "zh",
+    "view": "usage",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "使用记录",
+    "pass": true
+  },
+  {
+    "language": "zh",
+    "view": "usage",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "使用记录",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "home",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Workspace",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "home",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Workspace",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "team",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Organization & reporting",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "team",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Organization & reporting",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "teamAssets",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Team assets",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "teamAssets",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Team assets",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "teamProviders",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Team provider",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "teamProviders",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Team provider",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "assetLibrary",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Asset library",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "assetLibrary",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Asset library",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "usage",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Usage",
+    "pass": true
+  },
+  {
+    "language": "en",
+    "view": "usage",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "Usage",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "home",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "工作台",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "home",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "工作台",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "team",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "組織與回報",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "team",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "組織與回報",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "teamAssets",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "團隊資產",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "teamAssets",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "團隊資產",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "teamProviders",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "團隊供應商",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "teamProviders",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "團隊供應商",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "assetLibrary",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "資產庫",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "assetLibrary",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "資產庫",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "usage",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "使用紀錄",
+    "pass": true
+  },
+  {
+    "language": "zh-TW",
+    "view": "usage",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "使用紀錄",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "home",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "ワークスペース",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "home",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "ワークスペース",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "team",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "組織とレポート",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "team",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "組織とレポート",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "teamAssets",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "チームのアセット",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "teamAssets",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "チームのアセット",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "teamProviders",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "チームプロバイダー",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "teamProviders",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "チームプロバイダー",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "assetLibrary",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "アセット",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "assetLibrary",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "アセット",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "usage",
+    "viewport": [
+      1280,
+      800
+    ],
+    "expected_theme": "light",
+    "width": 1280,
+    "documentWidth": 1280,
+    "theme": "light",
+    "untranslated": false,
+    "overflow": [],
+    "title": "使用記録",
+    "pass": true
+  },
+  {
+    "language": "ja",
+    "view": "usage",
+    "viewport": [
+      960,
+      640
+    ],
+    "expected_theme": "dark",
+    "width": 960,
+    "documentWidth": 960,
+    "theme": "dark",
+    "untranslated": false,
+    "overflow": [],
+    "title": "使用記録",
+    "pass": true
+  }
+]
