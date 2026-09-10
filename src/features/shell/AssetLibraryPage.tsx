@@ -25,7 +25,7 @@ export function AssetLibraryPage({
               {t("clientHome.teamAssetsHint")}
             </p>
           </div>
-          <Button variant="outline" onClick={() => onNavigate("team")}>
+          <Button variant="outline" onClick={() => onNavigate("teamAssets")}>
             {t("clientNavigation.teamAssets")}
           </Button>
         </section>

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { APP_ICON_MAP } from "@/config/appConfig";
 import type { AppId } from "@/lib/api/types";
 import { getTeamStatus } from "@/features/team/api";
+import { useSharedTeamWorkspace } from "@/features/team/TeamWorkspaceBoundary";
 import type { ClientView } from "./navigation";
 
 interface Props {
@@ -20,15 +21,16 @@ export function ClientHomePage({
   onNavigate,
 }: Props) {
   const { t } = useTranslation();
+  const shared = useSharedTeamWorkspace();
   const team = useQuery({
     queryKey: ["team", "status"],
     queryFn: getTeamStatus,
-    enabled: teamEnabled,
+    enabled: teamEnabled && !shared,
     staleTime: 0,
     retry: false,
     refetchOnWindowFocus: false,
   });
-  const connection = team.data;
+  const connection = shared ? shared.connection : team.data;
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-6 py-7">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -55,7 +57,7 @@ export function ClientHomePage({
             {t("clientHome.organization")}
           </h3>
         </div>
-        {teamEnabled && team.isPending ? (
+        {teamEnabled && !shared && team.isPending ? (
           <div
             aria-busy="true"
             className="mt-5 h-14 animate-pulse rounded bg-muted"
@@ -100,7 +102,7 @@ export function ClientHomePage({
             )}
           </>
         )}
-        {teamEnabled && team.isError && (
+        {teamEnabled && !shared && team.isError && (
           <p role="alert" className="mt-3 text-sm text-destructive">
             {t("clientHome.readError")}
           </p>

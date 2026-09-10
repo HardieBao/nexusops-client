@@ -19,6 +19,8 @@ export const CLIENT_VIEWS = [
   "openclawAgents",
   "hermesMemory",
   "team",
+  "teamProviders",
+  "teamAssets",
 ] as const;
 export type ClientView = (typeof CLIENT_VIEWS)[number];
 export type MainView =
@@ -37,6 +39,8 @@ export function restoreClientView(value: string | null): ClientView {
 }
 
 export function mainViewFor(view: ClientView): MainView {
+  if (view === "teamProviders") return "providers";
+  if (view === "teamAssets") return "assetLibrary";
   if (["skills", "skillsDiscovery", "prompts", "agents"].includes(view))
     return "assetLibrary";
   if (view === "sessions") return "usage";
@@ -77,6 +81,8 @@ export const VIEW_TITLE_KEYS: Record<ClientView, string> = {
   assetLibrary: "clientNavigation.assetLibrary",
   usage: "clientNavigation.usage",
   team: "clientNavigation.team",
+  teamProviders: "team.provider.title",
+  teamAssets: "clientNavigation.teamAssets",
   settings: "common.settings",
   prompts: "prompts.title",
   skills: "skills.title",

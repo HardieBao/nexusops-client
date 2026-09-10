@@ -5,8 +5,8 @@
   "client_baseline": "f811e352fe3904214a2b2305baff81964a416c56",
   "server_baseline": "9a3022a02dbe1cbbe6d6823e04d18c14a9b831e6",
   "completed_tasks": ["T00", "T01", "T02"],
-  "active_tasks": ["T03"],
+  "active_tasks": ["T03", "T04"],
   "milestones": {"M1":"passed","M2":"in_progress","M3":"not_started","M4":"not_started","M5":"not_started"},
-  "current_verification": {"frontend_baseline":1105,"team_rust_passed":55,"team_rust_ignored":4,"shell_targeted_tests":39,"frontend_after_shell":1135,"frontend_test_files":141,"typecheck":"passed","renderer_build":"passed","browser_fixture_errors":0,"native_shell_verification":"pending"},
+  "current_verification": {"frontend_baseline":1105,"team_rust_passed":55,"team_rust_ignored":4,"shell_targeted_tests":39,"split_targeted_tests":65,"frontend_after_shell":1135,"frontend_after_team_split":1146,"frontend_test_files":143,"typecheck":"passed","renderer_build":"passed","browser_fixture_errors":0,"native_shell_verification":"pending"},
   "remaining_scope": "task.md 全部原范围保持有效，原生、TeamAI、服务端与 UAT 验收未被替代为 mock 或静态页面"
 }
