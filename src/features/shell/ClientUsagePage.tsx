@@ -1,4 +1,5 @@
 import { UsageDashboard } from "@/components/usage/UsageDashboard";
+import { ToolUsageHistoryPanel } from "@/features/team/ToolUsageHistoryPanel";
 import { useSettings, type SettingsFormState } from "@/hooks/useSettings";
 
 export function ClientUsagePage() {
@@ -18,6 +19,7 @@ export function ClientUsagePage() {
     );
   return (
     <div className="px-6 py-5">
+      <ToolUsageHistoryPanel />
       <UsageDashboard
         refreshIntervalMs={settings?.usageDashboardRefreshIntervalMs}
         onRefreshIntervalChange={(value) =>

@@ -1,12 +1,76 @@
 pub mod api;
+pub mod candidate;
 pub mod content;
 pub mod credentials;
 pub mod install;
 pub mod provider;
+mod rules;
 pub mod state;
 pub mod sync;
+pub mod teamai_sync;
 pub mod tool_usage;
 pub mod types;
+pub mod worker;
+
+#[cfg(test)]
+mod cancellation_barrier_tests {
+    use super::{credentials::fixtures::MemoryCredentialStore, TeamService};
+    use std::{sync::Arc, time::Duration};
+
+    #[tokio::test]
+    async fn idle_barrier_waits_for_the_filesystem_operation_owner() {
+        let directory = tempfile::tempdir().unwrap();
+        let service = Arc::new(
+            TeamService::with_credentials(
+                directory.path(),
+                Arc::new(MemoryCredentialStore::default()),
+            )
+            .unwrap(),
+        );
+        let writer = service.sync_operation.lock().await;
+        let other = service.clone();
+        let mut barrier = tokio::spawn(async move {
+            other.wait_for_idle().await;
+        });
+        assert!(
+            tokio::time::timeout(Duration::from_millis(30), &mut barrier)
+                .await
+                .is_err()
+        );
+        drop(writer);
+        tokio::time::timeout(Duration::from_secs(1), barrier)
+            .await
+            .unwrap()
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn idle_barrier_also_waits_for_connection_operations() {
+        let directory = tempfile::tempdir().unwrap();
+        let service = Arc::new(
+            TeamService::with_credentials(
+                directory.path(),
+                Arc::new(MemoryCredentialStore::default()),
+            )
+            .unwrap(),
+        );
+        let operation = service.operation.lock().await;
+        let other = service.clone();
+        let mut barrier = tokio::spawn(async move {
+            other.wait_for_idle().await;
+        });
+        assert!(
+            tokio::time::timeout(Duration::from_millis(30), &mut barrier)
+                .await
+                .is_err()
+        );
+        drop(operation);
+        tokio::time::timeout(Duration::from_secs(1), barrier)
+            .await
+            .unwrap()
+            .unwrap();
+    }
+}
 
 use std::{path::Path, sync::Arc};
 
@@ -28,6 +92,13 @@ pub struct TeamService {
 }
 
 impl TeamService {
+    // Same lock order as connect/disconnect/sync. A cancellation signal alone
+    // cannot prove an atomic filesystem operation has returned.
+    pub(crate) async fn wait_for_idle(&self) {
+        let _sync = self.sync_operation.lock().await;
+        let _operation = self.operation.lock().await;
+    }
+
     pub fn open(data_dir: &Path) -> Result<Self, TeamError> {
         Self::with_credentials(data_dir, Arc::new(OsCredentialStore))
     }
@@ -98,6 +169,12 @@ impl TeamService {
             return Err(TeamError::Cancelled);
         }
         let id = connection_id(api.gateway_url(), &profile)?;
+        if previous
+            .as_ref()
+            .is_none_or(|current| current.profile.key.id != profile.key.id)
+        {
+            self.tool_usage.unbind_history()?;
+        }
         self.tool_usage.bind_connection(&id)?;
         let previous_key = self.credentials.get(&id)?;
         self.credentials.set(&id, key)?;

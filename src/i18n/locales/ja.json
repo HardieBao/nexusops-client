@@ -1,4 +1,13 @@
 {
+  "teamOperation": {
+    "running": "処理を実行中です。後続の手順を停止できます。",
+    "stop": "現在の処理を停止",
+    "settling": "現在の処理が安全に終了するまで待機しています。完了した書き込みは保持されます。",
+    "waiting": "終了を待機中…",
+    "stopped": "後続の手順を停止しました。完了した書き込みは元に戻していません。再度プレビューして状態を確認してください。",
+    "cancelFailed": "停止要求を送信できませんでした。処理は終了しています。ローカルの結果を確認してください。",
+    "recoveryFailed": "現在の要求は終了しましたが、ローカルの結果を確認できません。書き込みが継続中または保持されている可能性があるため、再確認してください。"
+  },
   "clientNavigation": {
     "home": "ワークスペース",
     "providers": "ツール接続",
@@ -3278,6 +3287,16 @@
     "suggestedDefaultsHint": "このプリセットの推奨デフォルトモデル設定を使用します"
   },
   "team": {
+    "candidate": {
+      "title": "TeamAI 資産を準備",
+      "description": "ローカルの Skill ディレクトリまたは Rule ファイルを、管理者が確認して取り込める候補ファイルに変換します。",
+      "skill": "Skill ディレクトリを選択",
+      "rule": "Rule ファイルを選択",
+      "working": "候補ファイルを準備しています…",
+      "ready": "候補ファイルを作成しました: {{name}}",
+      "next": "管理者による取り込み後も、公開には通常の承認手順が必要です。",
+      "error": "変換できませんでした。入力を確認し、入力ディレクトリ外に新しい出力ファイルを選択してください。"
+    },
     "title": "チーム",
     "status": {
       "connected": "接続済み",
@@ -3306,7 +3325,10 @@
       "keyHint": "Key はローカル認証にのみ使い、OS の資格情報ストアに保存します。Team DB に平文では保存しません。",
       "submit": "確認して接続"
     },
-    "actions": { "refresh": "更新", "disconnect": "切断" },
+    "actions": {
+      "refresh": "更新",
+      "disconnect": "切断"
+    },
     "disconnect": {
       "title": "チーム切断の確認",
       "description": "切断すると OS 資格情報ストアの Team ログイン Key を消去します。ダウンロード済みファイルは残り、同期を停止します。",
@@ -3366,8 +3388,16 @@
       "restoreConfirmDescription": "現在のローカルファイルを置き換えます。復元前に新しい取り消し用バックアップを作成します。",
       "restoreConfirmTarget": "対象ツール: {{app}}。",
       "restoreConfirm": "置き換えて復元",
+      "activationPath": "ツールの指示ファイル: {{path}}",
+      "legacySync": "このゲートウェイは結果確認に未対応です。互換性のある資産同期を使用します。",
+      "ackTitle": "同期結果の確認",
+      "ackWaiting": "{{count}} 件の Skill / Rule 結果が確認待ちです。確認の再試行でファイルは再インストールされません。",
+      "ackConfirmed": "{{count}} 件の Skill / Rule 結果を確認しました。",
+      "ackSuperseded": "{{count}} 件の権限またはバージョンが変更されました。再プレビューしてください。",
+      "retryAck": "確認を再試行",
       "support": {
         "tool_skill": "ツールの Skill ディレクトリへインストール",
+        "tool_rule": "ツールの指示として有効化",
         "inactive_prompt": "無効な Prompt としてインポート",
         "managed_download": "Team 管理ディレクトリへダウンロード"
       },
@@ -3425,6 +3455,8 @@
       "restore_refresh_failed": "バックアップは復元済みですが、リモート更新に失敗しました"
     },
     "errorActions": {
+      "upgrade_required": "結果を確認するにはゲートウェイを更新してください。ローカルファイルは保持されます。",
+      "rate_limited": "レート制限中です。クライアントの実行中は待機時間後に確認を再試行します。",
       "invalid_gateway": "資格情報、クエリ、フラグメントを含まない HTTP(S) Gateway URL を入力してください。",
       "insecure_gateway": "HTTPS を使用してください。HTTP は明示的なループバックアドレスだけで使用できます。",
       "foreign_url": "Team Profile を更新してください。アセット URL が接続中の Gateway と一致しません。",
@@ -3467,6 +3499,46 @@
       "upstream_pending": "ローカルファイルは安全ですが、Prompt または Skill カタログの復旧が必要です。",
       "restore_refresh_failed": "バックアップはすでに復元済みです。失敗したのはリモート更新だけです。取り消す場合以外は再度復元しないでください。",
       "unknown": "操作の詳細を確認して再試行してください。"
+    },
+    "usageHistory": {
+      "title": "自分のローカルツール履歴",
+      "description": "UTC の日付で直近 30 日間の Hook イベントを保持します。下のモデルリクエストや費用とは別の集計です。イベント数はタスクの成功率ではありません。",
+      "connect": "組織に接続すると、自分のローカル履歴を確認できます。",
+      "clear": "ローカル履歴を消去",
+      "clearNotice": "自分のローカル履歴を消去しますか？送信待ちイベントと管理者の統計は削除されません。",
+      "confirmClear": "自分の履歴を消去する",
+      "error": "履歴の読み取りまたは消去に失敗しました。組織への接続を確認して再試行してください。",
+      "loading": "履歴を読み込み中…",
+      "runtime": "ツール",
+      "all": "すべてのツール",
+      "day": "日付（UTC）",
+      "event": "イベント",
+      "count": "イベント数",
+      "observed": "最終観測（UTC）",
+      "empty": "このツールの保持記録はありません。「組織と送信」で収集を有効にしてからツールを使用してください。過去の記録は補完されません。",
+      "events": {
+        "session_started": "セッション開始",
+        "session_completed": "セッション終了",
+        "prompt_submitted": "入力送信",
+        "turn_completed": "ターン終了",
+        "tool_completed": "ツール呼び出し終了"
+      },
+      "registration": {
+        "installed": "Hook 登録済み",
+        "not_installed": "Hook 未登録",
+        "needs_repair": "Hook の修復が必要",
+        "unreadable": "Hook 設定を読み取れません",
+        "disabled_by_tool": "ツール設定で Hook が無効"
+      },
+      "collection": {
+        "enabled": "収集有効",
+        "disabled": "収集無効"
+      },
+      "observation": {
+        "unobserved": "保持された観測イベントなし",
+        "observed": "24 時間以内にイベントを観測",
+        "stale": "最後のイベントから 24 時間以上"
+      }
     }
   },
   "subscription": {

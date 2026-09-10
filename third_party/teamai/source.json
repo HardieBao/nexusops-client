@@ -1,0 +1,26 @@
+{
+  "package_version": "0.22.0",
+  "commit": "6ae0619d067b1699bb2c6e435abf3ffe11a21d71",
+  "selected_files": [
+    {
+      "git_blob": "9f2ed0778fbf87aaeb15fbd25391c16662f75c9c",
+      "path": "src/utils/frontmatter.ts",
+      "sha256": "ffc6bd2829fb9bb87ceb37dd556a52459a0c6b221b66292ce9af686b47e6f3b9"
+    },
+    {
+      "git_blob": "d5b3212c8bbf47d01306a4105e05e6fcd137ef2c",
+      "path": "src/resources/rule-format.ts",
+      "sha256": "f1dc420618b225fe0260e8f2a62d6a147cf8627b41f29051020871fded92158b"
+    },
+    {
+      "git_blob": "935ff4be4df46d76c5ee4b8b06d8fb7bb55be3b9",
+      "path": "LICENSE",
+      "sha256": "31154d9c1a8bd8d37b449bdbb8a04f9b4618e5d330b52b0fdb7c452414d75a41"
+    }
+  ],
+  "bridge_owned_files": [
+    "src/utils/logger.ts"
+  ],
+  "license": "MIT",
+  "repository": "https://github.com/Tencent/teamai-cli"
+}

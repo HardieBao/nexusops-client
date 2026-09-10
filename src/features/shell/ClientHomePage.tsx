@@ -4,7 +4,7 @@ import { Building2, Plug, ArrowRight, Library } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { APP_ICON_MAP } from "@/config/appConfig";
 import type { AppId } from "@/lib/api/types";
-import { getTeamStatus } from "@/features/team/api";
+import { getTeamStatus, getToolObservation } from "@/features/team/api";
 import { useSharedTeamWorkspace } from "@/features/team/TeamWorkspaceBoundary";
 import type { ClientView } from "./navigation";
 
@@ -31,6 +31,20 @@ export function ClientHomePage({
     refetchOnWindowFocus: false,
   });
   const connection = shared ? shared.connection : team.data;
+  const activity = useQuery({
+    queryKey: [
+      "team",
+      "observation",
+      connection?.id,
+      connection?.profile.key.id,
+    ],
+    queryFn: getToolObservation,
+    enabled: teamEnabled && !!connection && !shared?.busy,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
   return (
     <div className="mx-auto max-w-5xl space-y-8 px-6 py-7">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -108,6 +122,62 @@ export function ClientHomePage({
           </p>
         )}
       </section>
+      {teamEnabled && connection && (
+        <section aria-labelledby="home-activity" className="space-y-3">
+          <h3 id="home-activity" className="font-semibold">
+            {t("team.usageHistory.title")}
+          </h3>
+          {activity.isPending ? (
+            <p role="status" className="text-sm text-muted-foreground">
+              {t("team.usageHistory.loading")}
+            </p>
+          ) : activity.isError ? (
+            <p role="alert" className="text-sm text-destructive">
+              {t("team.usageHistory.error")}
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {activity.data?.map((tool) => (
+                <li
+                  key={tool.runtime}
+                  className="flex flex-wrap gap-x-4 gap-y-1 py-3 text-sm"
+                >
+                  <strong>
+                    {tool.runtime === "codex" ? "Codex" : "Claude Code"}
+                  </strong>
+                  <span>
+                    {t(`team.usageHistory.registration.${tool.registration}`)}
+                  </span>
+                  <span>
+                    {t(
+                      `team.usageHistory.collection.${tool.collection_enabled ? "enabled" : "disabled"}`,
+                    )}
+                  </span>
+                  <span>
+                    {t(`team.usageHistory.observation.${tool.observation}`)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="outline"
+              disabled={!!shared?.busy}
+              onClick={() => onNavigate("team")}
+            >
+              {t("clientNavigation.team")}
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!!shared?.busy}
+              onClick={() => onNavigate("usage")}
+            >
+              {t("clientNavigation.usage")}
+            </Button>
+          </div>
+        </section>
+      )}
       <section aria-labelledby="home-tools">
         <h3 id="home-tools" className="mb-4 font-semibold">
           {t("clientHome.currentTool")}

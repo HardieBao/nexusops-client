@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
 import { AlertTriangle, Loader2, Package } from "lucide-react";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -40,6 +41,11 @@ type Props = Pick<
   | "setOverwrite"
   | "localHistoryApp"
   | "localHistory"
+  | "acknowledgements"
+  | "teamaiSync"
+  | "legacySync"
+  | "handleRetryAcknowledgements"
+  | "refreshAcknowledgements"
 >;
 export function TeamAssetsSection({
   assetApp,
@@ -65,8 +71,22 @@ export function TeamAssetsSection({
   setOverwrite,
   localHistoryApp,
   localHistory,
+  acknowledgements,
+  teamaiSync,
+  legacySync,
+  handleRetryAcknowledgements,
+  refreshAcknowledgements,
 }: Props) {
   const { t } = useTranslation();
+  useEffect(() => {
+    if (!connection || busy !== null) return;
+    void refreshAcknowledgements();
+    const interval = window.setInterval(
+      () => void refreshAcknowledgements(),
+      15000,
+    );
+    return () => window.clearInterval(interval);
+  }, [connection?.id, busy, refreshAcknowledgements]);
   if (!connection) return null;
   return (
     <div className="rounded-2xl border bg-card p-5 shadow-sm">
@@ -133,9 +153,58 @@ export function TeamAssetsSection({
             )}
             {t("team.assets.sync")}
           </Button>
+          {(teamaiSync || acknowledgements) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={busy !== null}
+              onClick={() => void handleRetryAcknowledgements()}
+            >
+              {t("team.assets.retryAck")}
+            </Button>
+          )}
         </div>
       </div>
 
+      {legacySync && (
+        <p className="mt-3 text-xs text-muted-foreground">
+          {t("team.assets.legacySync")}
+        </p>
+      )}
+      {acknowledgements &&
+        (acknowledgements.waiting > 0 ||
+          acknowledgements.acknowledged > 0 ||
+          acknowledgements.superseded > 0 ||
+          acknowledgements.last_error) && (
+          <Alert className="mt-4">
+            <AlertTitle>{t("team.assets.ackTitle")}</AlertTitle>
+            <AlertDescription>
+              {t(
+                acknowledgements.waiting > 0
+                  ? "team.assets.ackWaiting"
+                  : "team.assets.ackConfirmed",
+                {
+                  count:
+                    acknowledgements.waiting || acknowledgements.acknowledged,
+                },
+              )}
+              {acknowledgements.superseded > 0 && (
+                <p>
+                  {t("team.assets.ackSuperseded", {
+                    count: acknowledgements.superseded,
+                  })}
+                </p>
+              )}
+              {acknowledgements.last_error && (
+                <p>
+                  {t(`team.errorActions.${acknowledgements.last_error}`, {
+                    defaultValue: acknowledgements.last_error,
+                  })}
+                </p>
+              )}
+            </AlertDescription>
+          </Alert>
+        )}
       {manifest?.conflicts.length ? (
         <Alert variant="destructive" className="mt-5">
           <AlertTriangle className="h-4 w-4" />
@@ -243,6 +312,13 @@ export function TeamAssetsSection({
                           defaultValue: result.error_message,
                         },
                       )}
+                    </p>
+                  )}
+                  {planItem?.activation_path && (
+                    <p className="mt-1 break-all font-mono text-[11px] text-muted-foreground">
+                      {t("team.assets.activationPath", {
+                        path: planItem.activation_path,
+                      })}
                     </p>
                   )}
                   {!result?.error_message &&

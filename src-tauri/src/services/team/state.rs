@@ -4,6 +4,8 @@ use rusqlite::{params, Connection, OptionalExtension};
 
 use super::types::{ManagedAssetState, ManagedProviderLink, TeamConnection, TeamError};
 
+pub mod teamai;
+
 pub struct TeamState {
     connection: Mutex<Connection>,
 }
@@ -19,7 +21,7 @@ impl TeamState {
         let version: u32 = connection
             .pragma_query_value(None, "user_version", |row| row.get(0))
             .map_err(|_| TeamError::Storage)?;
-        if version > 2 {
+        if version > 3 {
             return Err(TeamError::Storage);
         }
         connection
@@ -42,6 +44,21 @@ impl TeamState {
                  provider_id TEXT NOT NULL,
                  managed_model TEXT,
                  PRIMARY KEY(connection_id,app)
+             );
+             CREATE TABLE IF NOT EXISTS teamai_ack_queue (
+                 connection_id TEXT NOT NULL,
+                 command_id TEXT NOT NULL,
+                 app TEXT NOT NULL,
+                 asset_id INTEGER NOT NULL,
+                 revision INTEGER NOT NULL,
+                 content_hash TEXT NOT NULL,
+                 metadata TEXT NOT NULL,
+                 ready INTEGER NOT NULL DEFAULT 0 CHECK(ready IN(0,1)),
+                 local_committed INTEGER NOT NULL DEFAULT 0 CHECK(local_committed IN(0,1)),
+                 outcome TEXT,
+                 retry_at TEXT,
+                 last_error TEXT,
+                 PRIMARY KEY(connection_id,command_id)
              );",
             )
             .map_err(|_| TeamError::Storage)?;
@@ -68,6 +85,9 @@ impl TeamState {
                 .pragma_update(None, "user_version", 2)
                 .map_err(|_| TeamError::Storage)?;
         }
+        connection
+            .pragma_update(None, "user_version", 3)
+            .map_err(|_| TeamError::Storage)?;
         Ok(Self {
             connection: Mutex::new(connection),
         })
@@ -109,6 +129,12 @@ impl TeamState {
             "UPDATE team_assets SET metadata=json_set(metadata,'$.subscribed',json('false')) WHERE connection_id=?1", [connection_id],
         ).map_err(|_| TeamError::Storage)?;
         transaction
+            .execute(
+                "DELETE FROM teamai_ack_queue WHERE connection_id=?1",
+                [connection_id],
+            )
+            .map_err(|_| TeamError::Storage)?;
+        transaction
             .execute("DELETE FROM team_connection WHERE singleton=1", [])
             .map_err(|_| TeamError::Storage)?;
         transaction.commit().map_err(|_| TeamError::Storage)
@@ -132,10 +158,26 @@ impl TeamState {
     }
 
     pub fn save_asset_state(&self, metadata: &ManagedAssetState) -> Result<(), TeamError> {
+        self.write_asset_state(metadata, false)
+    }
+
+    // Use only after disk and tool state are verified. Maintenance writes must not confirm an intent.
+    pub fn save_installed_asset_state(
+        &self,
+        metadata: &ManagedAssetState,
+    ) -> Result<(), TeamError> {
+        self.write_asset_state(metadata, true)
+    }
+
+    fn write_asset_state(
+        &self,
+        metadata: &ManagedAssetState,
+        installed: bool,
+    ) -> Result<(), TeamError> {
         let text = serde_json::to_string(metadata).map_err(|_| TeamError::Storage)?;
-        self.connection
-            .lock()
-            .map_err(|_| TeamError::Storage)?
+        let mut connection = self.connection.lock().map_err(|_| TeamError::Storage)?;
+        let transaction = connection.transaction().map_err(|_| TeamError::Storage)?;
+        transaction
             .execute(
                 "INSERT INTO team_assets(connection_id,app,asset_id,metadata) VALUES(?1,?2,?3,?4)
              ON CONFLICT(connection_id,app,asset_id) DO UPDATE SET metadata=excluded.metadata",
@@ -147,7 +189,17 @@ impl TeamState {
                 ],
             )
             .map_err(|_| TeamError::Storage)?;
-        Ok(())
+        if installed
+            && !metadata.upstream_pending
+            && !metadata.restored_unmanaged
+            && metadata.last_synced_at.is_some()
+        {
+            transaction.execute("UPDATE teamai_ack_queue SET ready=1,local_committed=1,outcome='applied'
+                WHERE connection_id=?1 AND app=?2 AND asset_id=?3 AND revision=?4 AND content_hash=?5 AND local_committed=0",
+                params![metadata.connection_id,metadata.app,metadata.asset_id,metadata.revision,metadata.content_hash])
+                .map_err(|_| TeamError::Storage)?;
+        }
+        transaction.commit().map_err(|_| TeamError::Storage)
     }
 
     pub fn provider_links(
@@ -241,7 +293,7 @@ mod tests {
             .unwrap()
             .pragma_query_value(None, "user_version", |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 2);
+        assert_eq!(version, 3);
     }
 
     #[test]

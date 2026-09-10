@@ -1,0 +1,48 @@
+{
+  "source_head": "fff87c34765e9e060ae2de3a4a949a3c801ea14e",
+  "source_branch": "codex/client-teamai-refactor",
+  "upstream_version": "0.22.0",
+  "build_session": 81018,
+  "package_status": "NSIS installation, installed resource bytes, installed app startup, worker and uninstall verified in isolated directory; clean-user upgrade and UAT pending",
+  "resource_checks": [
+    {
+      "verified": true,
+      "sha256": "659c90f48a480b0be8408fff52f0493810056d3e78f8f5089a01c72bcdf8ec96",
+      "path": "worker.mjs"
+    },
+    {
+      "verified": true,
+      "sha256": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de",
+      "path": "node.exe"
+    },
+    {
+      "verified": true,
+      "sha256": "148eacf7863ef4329224a29398623077200a27194aa075569faf4a0a85566ca5",
+      "path": "LICENSE-Node"
+    }
+  ],
+  "runtime_version": "24.18.0",
+  "dependency_license_files": [
+    "LICENSE-TeamAI",
+    "licenses/extend-shallow-2.0.1-LICENSE",
+    "licenses/gray-matter-4.0.3-LICENSE",
+    "licenses/is-extendable-0.1.1-LICENSE",
+    "licenses/js-yaml-3.15.2-LICENSE",
+    "licenses/kind-of-6.0.3-LICENSE",
+    "licenses/section-matter-1.0.0-LICENSE",
+    "licenses/strip-bom-string-1.0.0-LICENSE"
+  ],
+  "upstream_commit": "6ae0619d067b1699bb2c6e435abf3ffe11a21d71",
+  "checked_at": "2026-09-11T03:31:08.8507683+08:00",
+  "source_state": "uncommitted working tree; not a release commit",
+  "package": {
+    "sha256": "60ff5455c477b14cfb82546bce9765be60487eab1eeeb28efde4411fa1bfbdc4",
+    "bytes": 33765939,
+    "path": "D:\\Hardie作品\\nexusops-client\\src-tauri\\target\\x86_64-pc-windows-msvc\\release\\bundle\\nsis\\NexusOps Client_0.1.0_x64-setup.exe"
+  },
+  "executable": {
+    "path": "D:\\Hardie作品\\nexusops-client\\src-tauri\\target\\x86_64-pc-windows-msvc\\release\\nexusops-client.exe",
+    "sha256": "8fd35bf6a0cb3878b3bd6a73fe32af15dd47e4442086c5ac0a18f7217a2d8e55"
+  },
+  "installed_executable_sha256": "30f5c96795bacf5e4f18d8a18e93ca53df0cb91a7b6736c67c509e55443f2225"
+}

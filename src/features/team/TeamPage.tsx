@@ -5,6 +5,7 @@ import { TeamConnectSection } from "./TeamConnectSection";
 import { TeamConnectionSection } from "./TeamConnectionSection";
 import { TeamProviderSection } from "./TeamProviderSection";
 import { TeamAssetsSection } from "./TeamAssetsSection";
+import { TeamOperationStatus } from "./TeamOperationStatus";
 import { useSharedTeamWorkspace } from "./TeamWorkspaceBoundary";
 export type TeamSection = "all" | "organization" | "providers" | "assets";
 export function TeamPage({ section = "all" }: { section?: TeamSection }) {
@@ -29,6 +30,12 @@ export function TeamWorkspaceContent({
   if (!workspace.connection)
     return (
       <main className="h-full overflow-y-auto px-6 py-8">
+        <TeamOperationStatus
+          busy={workspace.busy}
+          operationNotice={workspace.operationNotice}
+          cancelCurrentOperation={workspace.cancelCurrentOperation}
+          runRefresh={workspace.runRefresh}
+        />
         <TeamConnectSection
           handleConnect={workspace.handleConnect}
           handleProfileFile={workspace.handleProfileFile}
@@ -45,6 +52,12 @@ export function TeamWorkspaceContent({
   return (
     <main className="h-full overflow-y-auto px-6 py-6">
       <div className="mx-auto max-w-6xl space-y-6 pb-12">
+        <TeamOperationStatus
+          busy={workspace.busy}
+          operationNotice={workspace.operationNotice}
+          cancelCurrentOperation={workspace.cancelCurrentOperation}
+          runRefresh={workspace.runRefresh}
+        />
         {(section === "all" || section === "organization") && (
           <TeamConnectionSection
             connection={workspace.connection}
@@ -63,7 +76,11 @@ export function TeamWorkspaceContent({
           />
         )}
         {(section === "all" || section === "organization") && (
-          <ToolUsagePanel key={workspace.connection.id} />
+          <ToolUsagePanel
+            key={`${workspace.connection.id}:${workspace.connection.profile.key.id}`}
+            disabled={workspace.busy !== null}
+            onBusyChange={workspace.setReportingBusy}
+          />
         )}
         {workspace.error && <ErrorAlert error={workspace.error} />}
         <section
@@ -94,6 +111,13 @@ export function TeamWorkspaceContent({
           )}
           {(section === "all" || section === "assets") && (
             <TeamAssetsSection
+              refreshAcknowledgements={workspace.refreshAcknowledgements}
+              acknowledgements={workspace.acknowledgements}
+              teamaiSync={workspace.teamaiSync}
+              legacySync={workspace.legacySync}
+              handleRetryAcknowledgements={
+                workspace.handleRetryAcknowledgements
+              }
               assetApp={workspace.assetApp}
               busy={workspace.busy}
               requestRevision={workspace.requestRevision}

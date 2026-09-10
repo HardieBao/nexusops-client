@@ -258,7 +258,10 @@ pub fn verify_download(
     })
 }
 
-fn verify_skill(bytes: &[u8], limits: ContentLimits) -> Result<VerifiedContent, ContentError> {
+pub(super) fn verify_skill(
+    bytes: &[u8],
+    limits: ContentLimits,
+) -> Result<VerifiedContent, ContentError> {
     if bytes.len() as u64 > limits.max_archive_bytes {
         return Err(ContentError::TooLarge("compressed archive bytes"));
     }

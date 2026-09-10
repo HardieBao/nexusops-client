@@ -17,9 +17,13 @@ use std::{
     time::Duration,
 };
 
+#[cfg(test)]
+mod cli_tests;
+pub mod history;
 pub mod hooks;
 #[cfg(test)]
 mod http_tests;
+pub mod observation;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -55,6 +59,7 @@ impl UsageStore {
           CREATE TABLE IF NOT EXISTS settings (id INTEGER PRIMARY KEY CHECK(id=1), connection_id TEXT NOT NULL DEFAULT '', enabled INTEGER NOT NULL DEFAULT 0, uploaded INTEGER NOT NULL DEFAULT 0, last_uploaded_at TEXT, last_error TEXT);
           INSERT OR IGNORE INTO settings(id) VALUES(1);
           CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY, body TEXT NOT NULL, created_at TEXT NOT NULL);").map_err(|_| TeamError::Storage)?;
+        history::initialize(&db)?;
         Ok(Self {
             db: Mutex::new(db),
             directory: directory.to_path_buf(),
@@ -88,9 +93,40 @@ impl UsageStore {
         tx.commit().map_err(|_| TeamError::Storage)
     }
 
+    pub fn bind_history(&self, connection_id: &str, member_id: i64) -> Result<(), TeamError> {
+        let owner = history::owner(connection_id, member_id)?;
+        let mut db = self.db.lock().map_err(|_| TeamError::Storage)?;
+        let tx = db.transaction().map_err(|_| TeamError::Storage)?;
+        tx.execute("UPDATE settings SET enabled=0,uploaded=0,last_uploaded_at=NULL,last_error=NULL WHERE NOT EXISTS(SELECT 1 FROM usage_history_binding WHERE id=1 AND owner=?1)", [&owner]).map_err(|_| TeamError::Storage)?;
+        tx.execute("DELETE FROM events WHERE NOT EXISTS(SELECT 1 FROM usage_history_binding WHERE id=1 AND owner=?1)", [&owner]).map_err(|_| TeamError::Storage)?;
+        tx.execute("INSERT INTO usage_history_binding(id,connection_id,owner) VALUES(1,?1,?2) ON CONFLICT(id) DO UPDATE SET connection_id=excluded.connection_id,owner=excluded.owner", params![connection_id,owner]).map_err(|_| TeamError::Storage)?;
+        tx.commit().map_err(|_| TeamError::Storage)
+    }
+
+    pub fn unbind_history(&self) -> Result<(), TeamError> {
+        let mut db = self.db.lock().map_err(|_| TeamError::Storage)?;
+        let tx = db.transaction().map_err(|_| TeamError::Storage)?;
+        tx.execute_batch("UPDATE settings SET enabled=0,uploaded=0,last_uploaded_at=NULL,last_error=NULL WHERE id=1; DELETE FROM events; DELETE FROM usage_history_binding;").map_err(|_| TeamError::Storage)?;
+        tx.commit().map_err(|_| TeamError::Storage)
+    }
+
+    pub fn history(&self, connection_id: &str) -> Result<Vec<history::DailyUsage>, TeamError> {
+        let db = self.db.lock().map_err(|_| TeamError::Storage)?;
+        history::read(&db, connection_id, Utc::now())
+    }
+
+    pub fn clear_history(&self, connection_id: &str) -> Result<(), TeamError> {
+        let mut db = self.db.lock().map_err(|_| TeamError::Storage)?;
+        let tx = db.transaction().map_err(|_| TeamError::Storage)?;
+        for table in ["usage_history_daily", "usage_history_seen"] {
+            tx.execute(&format!("DELETE FROM {table} WHERE owner IN(SELECT b.owner FROM usage_history_binding b JOIN settings s ON b.id=s.id AND b.connection_id=s.connection_id WHERE b.connection_id=?1)"), [connection_id]).map_err(|_| TeamError::Storage)?;
+        }
+        tx.commit().map_err(|_| TeamError::Storage)
+    }
+
     pub fn status(&self, connection_id: &str) -> Result<UsageStatus, TeamError> {
         self.db.lock().map_err(|_| TeamError::Storage)?.query_row(
-            "SELECT enabled AND connection_id=?1,(SELECT count(*) FROM events),uploaded,last_uploaded_at,last_error FROM settings WHERE id=1", [connection_id],
+            "SELECT enabled AND connection_id=?1,CASE WHEN connection_id=?1 THEN (SELECT count(*) FROM events) ELSE 0 END,CASE WHEN connection_id=?1 THEN uploaded ELSE 0 END,CASE WHEN connection_id=?1 THEN last_uploaded_at END,CASE WHEN connection_id=?1 THEN last_error END FROM settings WHERE id=1", [connection_id],
             |r| Ok(UsageStatus { enabled: r.get(0)?, pending: r.get(1)?, uploaded: r.get(2)?, last_uploaded_at: r.get(3)?, last_error: r.get(4)? })
         ).map_err(|_| TeamError::Storage)
     }
@@ -160,6 +196,7 @@ impl UsageStore {
             params![usage.id, body, usage.timestamp],
         )
         .map_err(|_| TeamError::Storage)?;
+        history::record(&db, &usage, Utc::now())?;
         db.commit().map_err(|_| TeamError::Storage)
     }
 
@@ -183,19 +220,43 @@ impl UsageStore {
     fn acknowledge(&self, events: &[UsageEvent]) -> Result<(), TeamError> {
         let mut db = self.db.lock().map_err(|_| TeamError::Storage)?;
         let tx = db.transaction().map_err(|_| TeamError::Storage)?;
+        let mut acknowledged = 0;
         for e in events {
-            tx.execute("DELETE FROM events WHERE id=?1", [&e.id])
+            acknowledged += tx
+                .execute("DELETE FROM events WHERE id=?1", [&e.id])
                 .map_err(|_| TeamError::Storage)?;
         }
-        tx.execute("UPDATE settings SET uploaded=uploaded+?1,last_uploaded_at=?2,last_error=NULL WHERE id=1", params![events.len(), Utc::now().to_rfc3339()]).map_err(|_| TeamError::Storage)?;
+        if acknowledged > 0 {
+            tx.execute("UPDATE settings SET uploaded=uploaded+?1,last_uploaded_at=?2,last_error=NULL WHERE id=1", params![acknowledged, Utc::now().to_rfc3339()]).map_err(|_| TeamError::Storage)?;
+        }
         tx.commit().map_err(|_| TeamError::Storage)
     }
 }
 
 impl TeamService {
+    pub async fn tool_usage_history(&self) -> Result<Vec<history::DailyUsage>, TeamError> {
+        let _operation = self.operation.lock().await;
+        let connection = self.status()?.ok_or(TeamError::NotConnected)?;
+        self.tool_usage.history(&connection.id)
+    }
+
+    pub async fn clear_tool_usage_history(&self) -> Result<(), TeamError> {
+        let _operation = self.operation.lock().await;
+        let connection = self.status()?.ok_or(TeamError::NotConnected)?;
+        self.tool_usage.clear_history(&connection.id)
+    }
+
     pub async fn configure_tool_usage(&self, enabled: bool) -> Result<UsageStatus, TeamError> {
         let _operation = self.operation.lock().await;
         let connection = self.status()?.ok_or(TeamError::NotConnected)?;
+        if enabled {
+            let key = self.member_key()?;
+            let project = TeamApi::new(&connection.gateway_url)?
+                .teamai_project(&key, &connection.profile, &Cancellation::default())
+                .await?;
+            self.tool_usage
+                .bind_history(&connection.id, project.member_id)?;
+        }
         // Disable collection before removing hooks, including when a config is unreadable.
         if !enabled {
             self.tool_usage.configure(&connection.id, false)?;
@@ -262,6 +323,67 @@ pub fn run_hook(args: &[String]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn repeated_acknowledgements_count_only_deleted_events() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = UsageStore::open(dir.path()).unwrap();
+        store.configure("connection-a", true).unwrap();
+        for _ in 0..20 {
+            store
+                .capture("codex", &serde_json::json!({"hook_event_name":"Stop"}))
+                .unwrap();
+        }
+        let batch = store.pending().unwrap();
+        store.acknowledge(&batch[..5]).unwrap();
+        store.acknowledge(&batch).unwrap();
+        let status = store.status("connection-a").unwrap();
+        assert_eq!(status.uploaded, 20);
+        assert_eq!(status.pending, 0);
+        store.acknowledge(&batch).unwrap();
+        let repeated = store.status("connection-a").unwrap();
+        assert_eq!(repeated.uploaded, 20);
+        assert_eq!(repeated.last_uploaded_at, status.last_uploaded_at);
+        drop(store);
+        assert_eq!(
+            UsageStore::open(dir.path())
+                .unwrap()
+                .status("connection-a")
+                .unwrap()
+                .uploaded,
+            20
+        );
+    }
+
+    #[test]
+    fn status_for_another_connection_does_not_expose_queue_metadata() {
+        let dir = tempfile::tempdir().unwrap();
+        let store = UsageStore::open(dir.path()).unwrap();
+        store.configure("connection-a", true).unwrap();
+        store
+            .capture("codex", &serde_json::json!({"hook_event_name":"Stop"}))
+            .unwrap();
+        store.acknowledge(&store.pending().unwrap()).unwrap();
+        store
+            .capture("codex", &serde_json::json!({"hook_event_name":"Stop"}))
+            .unwrap();
+        store
+            .db
+            .lock()
+            .unwrap()
+            .execute("UPDATE settings SET last_error='test_error' WHERE id=1", [])
+            .unwrap();
+        let other = store.status("connection-b").unwrap();
+        assert!(!other.enabled);
+        assert_eq!(other.pending, 0);
+        assert_eq!(other.uploaded, 0);
+        assert!(other.last_uploaded_at.is_none());
+        assert!(other.last_error.is_none());
+        let own = store.status("connection-a").unwrap();
+        assert_eq!(own.pending, 1);
+        assert_eq!(own.uploaded, 1);
+        assert_eq!(own.last_error.as_deref(), Some("test_error"));
+    }
     #[test]
     fn capture_is_opt_in_minimal_and_disconnect_drops_pending() {
         let dir = tempfile::tempdir().unwrap();

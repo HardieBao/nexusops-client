@@ -1,5 +1,33 @@
 import { invoke } from "@tauri-apps/api/core";
 
+export interface ToolUsageDay {
+  day: string;
+  runtime: string;
+  event: string;
+  count: number;
+  last_observed_at: string;
+}
+
+export const getToolUsageHistory = () =>
+  invoke<ToolUsageDay[]>("team_tool_usage_history");
+export const clearToolUsageHistory = () =>
+  invoke<void>("team_clear_tool_usage_history");
+
+export interface ToolObservation {
+  runtime: string;
+  registration:
+    | "installed"
+    | "not_installed"
+    | "needs_repair"
+    | "unreadable"
+    | "disabled_by_tool";
+  collection_enabled: boolean;
+  observation: "unobserved" | "observed" | "stale";
+  last_observed_at: string | null;
+}
+export const getToolObservation = () =>
+  invoke<ToolObservation[]>("team_tool_observation");
+
 export type ConnectionStatus =
   | "connected"
   | "authentication_required"
@@ -114,13 +142,18 @@ export type DriftStatus =
   | "local_modified"
   | "both_modified";
 
-export type SyncSupport = "tool_skill" | "inactive_prompt" | "managed_download";
+export type SyncSupport =
+  | "tool_skill"
+  | "tool_rule"
+  | "inactive_prompt"
+  | "managed_download";
 
 export interface SyncPlanItem {
   asset: ManifestItem;
   drift: DriftStatus;
   support: SyncSupport;
   install_path: string;
+  activation_path?: string | null;
   previous_revision: number | null;
   subscribed: boolean;
   has_backup: boolean;
@@ -138,6 +171,94 @@ export interface SyncPlan {
   items: SyncPlanItem[];
   withdrawn: LocalAssetHistory[];
   last_successful_sync: string | null;
+}
+
+export interface TeamAIPreview {
+  project: {
+    id: number;
+    member_id: number;
+    organization_id: string;
+    workspace_id: string;
+    name: string;
+  };
+  commands: Array<{ asset_id: number; command_id: string }>;
+  plan: SyncPlan;
+  legacy_items: SyncPlanItem[];
+}
+
+export interface TeamAIAcknowledgements {
+  acknowledged: number;
+  superseded: number;
+  waiting: number;
+  last_error: string | null;
+}
+
+export interface TeamAICandidateRequest {
+  kind: "skill" | "rule";
+  root: string;
+  entry: string | null;
+  output: string;
+}
+export interface TeamAICandidateExport {
+  output: string;
+  kind: "skill" | "rule";
+  name: string;
+  content_hash: string;
+  bytes: number;
+}
+export function exportTeamAICandidate(
+  request: TeamAICandidateRequest,
+): Promise<TeamAICandidateExport> {
+  return invoke("teamai_export_candidate", { request });
+}
+
+function teamAIRuntime(app: string): "codex" | "claude-code" {
+  if (app === "codex") return "codex";
+  if (app === "claude") return "claude-code";
+  throw new Error("Unsupported TeamAI runtime");
+}
+
+export function previewTeamAI(app: string): Promise<TeamAIPreview> {
+  return invoke("teamai_preview", {
+    runtime: teamAIRuntime(app),
+    assetIds: null,
+  });
+}
+
+export function applyTeamAI(
+  app: string,
+  preview: TeamAIPreview,
+  overwrite: SyncOverwriteDecision[],
+): Promise<{
+  install: SyncBatchResult;
+  acknowledgements: TeamAIAcknowledgements;
+}> {
+  return invoke("teamai_apply", {
+    runtime: teamAIRuntime(app),
+    reviewed: preview.commands.map(({ asset_id, command_id }) => ({
+      asset_id,
+      command_id,
+    })),
+    legacyReviewed: preview.legacy_items.map(({ asset }) => ({
+      asset_id: asset.asset_id,
+      revision: asset.revision,
+      content_hash: asset.content_hash,
+    })),
+    overwrite,
+  });
+}
+
+export function retryTeamAIAcknowledgements(
+  app: string,
+): Promise<TeamAIAcknowledgements> {
+  return invoke("teamai_retry_acks", { runtime: teamAIRuntime(app) });
+}
+
+export function getTeamAIAcknowledgementStatus(app: string): Promise<{
+  connection: TeamConnection | null;
+  status: { pending: number; last_error: string | null };
+}> {
+  return invoke("teamai_ack_status", { runtime: teamAIRuntime(app) });
 }
 
 export interface LocalAssetHistory {
@@ -205,6 +326,10 @@ export function refreshTeam() {
 
 export function cancelTeamOperation() {
   return invoke<void>("team_cancel");
+}
+
+export function waitForTeamIdle() {
+  return invoke<void>("team_wait_idle");
 }
 
 export function disconnectTeam(removeProviderCredentials: boolean) {

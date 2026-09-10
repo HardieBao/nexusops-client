@@ -7966,7 +7966,22 @@ model_catalog_json = "cc-switch-model-catalog.json"
         #[cfg(unix)]
         std::os::unix::fs::symlink(&outside_dir, base_dir.join("link")).expect("symlink");
         #[cfg(windows)]
-        std::os::windows::fs::symlink_dir(&outside_dir, base_dir.join("link")).expect("symlink");
+        {
+            // Directory junctions exercise the same canonical escape without administrator privileges.
+            use std::os::windows::process::CommandExt;
+            let result = std::process::Command::new("cmd.exe")
+                .args(["/d", "/c", "mklink", "/J"])
+                .arg(base_dir.join("link"))
+                .arg(&outside_dir)
+                .creation_flags(0x08000000)
+                .output()
+                .expect("create directory junction");
+            assert!(result.status.success(), "junction fixture creation failed");
+            assert_eq!(
+                fs::canonicalize(base_dir.join("link")).unwrap(),
+                fs::canonicalize(&outside_dir).unwrap()
+            );
+        }
 
         let config_text = r#"model_catalog_json = "link/cc-switch-model-catalog.json"
 "#;

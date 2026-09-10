@@ -1,4 +1,13 @@
 {
+  "teamOperation": {
+    "running": "目前操作正在執行，可以停止後續步驟。",
+    "stop": "停止目前操作",
+    "settling": "正在等待目前操作安全結束，已完成的寫入會保留。",
+    "waiting": "正在收尾…",
+    "stopped": "已停止後續步驟，已完成的寫入不會回復。請重新預覽，確認目前狀態。",
+    "cancelFailed": "停止請求未能送達。目前操作已結束，請檢查本機結果。",
+    "recoveryFailed": "目前請求已結束，但無法確認本機結果。寫入可能仍在收尾或已保留，請重新檢查。"
+  },
   "clientNavigation": {
     "home": "工作台",
     "providers": "工具接入",
@@ -3279,6 +3288,16 @@
     "suggestedDefaultsHint": "使用此預設推薦的預設模型設定"
   },
   "team": {
+    "candidate": {
+      "title": "準備 TeamAI 資產",
+      "description": "將本機 Skill 目錄或 Rule 檔案轉換為候選檔案，供管理員審核匯入。",
+      "skill": "選擇 Skill 目錄",
+      "rule": "選擇 Rule 檔案",
+      "working": "正在準備候選檔案…",
+      "ready": "候選檔案已產生：{{name}}",
+      "next": "請將檔案交由管理員匯入；發佈仍需經過原有審核流程。",
+      "error": "轉換未完成，請檢查來源，並在來源目錄之外選擇新的輸出檔案。"
+    },
     "title": "團隊",
     "status": {
       "connected": "已連線",
@@ -3307,7 +3326,10 @@
       "keyHint": "Key 僅供本機驗證並儲存在作業系統憑證庫；Team 資料庫不保存明文。",
       "submit": "驗證並連線"
     },
-    "actions": { "refresh": "重新整理", "disconnect": "退出團隊" },
+    "actions": {
+      "refresh": "重新整理",
+      "disconnect": "退出團隊"
+    },
     "disconnect": {
       "title": "確認退出團隊",
       "description": "退出會清除作業系統憑證庫中的 Team 登入 Key。已下載檔案會保留並停止同步。",
@@ -3367,8 +3389,16 @@
       "restoreConfirmDescription": "目前的本機檔案將被取代；NexusOps 會先建立新的復原備份。",
       "restoreConfirmTarget": "目標工具：{{app}}。",
       "restoreConfirm": "取代並還原",
+      "activationPath": "工具載入入口：{{path}}",
+      "legacySync": "閘道版本暫不支援結果確認，目前使用相容資產同步。",
+      "ackTitle": "同步結果確認",
+      "ackWaiting": "{{count}} 條 Skill / Rule 結果等待確認；重試確認不會重新安裝檔案。",
+      "ackConfirmed": "已確認 {{count}} 條 Skill / Rule 同步結果。",
+      "ackSuperseded": "{{count}} 條結果的授權或版本已變更，請重新預覽後再同步。",
+      "retryAck": "重試確認",
       "support": {
         "tool_skill": "安裝到工具 Skill 目錄",
+        "tool_rule": "接入工具實際載入的規則",
         "inactive_prompt": "匯入為未啟用 Prompt",
         "managed_download": "下載到 Team 受管目錄"
       },
@@ -3426,6 +3456,8 @@
       "restore_refresh_failed": "備份已還原，僅遠端重新整理失敗"
     },
     "errorActions": {
+      "upgrade_required": "請升級閘道後再確認這些結果，本機檔案會保留。",
+      "rate_limited": "閘道已限流；客戶端執行期間會在等待時間結束後重試確認。",
       "invalid_gateway": "請輸入不含憑證、查詢參數或片段的 HTTP(S) Gateway 服務位址。",
       "insecure_gateway": "請使用 HTTPS；只有明確的本機回環位址允許 HTTP。",
       "foreign_url": "請重新整理 Team Profile；資產位址與目前 Gateway 不一致。",
@@ -3468,6 +3500,46 @@
       "upstream_pending": "本機檔案安全，但 Prompt 或 Skill 目錄仍需復原。",
       "restore_refresh_failed": "備份已經還原，僅遠端重新整理失敗；除非要復原本次操作，否則不要再次按還原。",
       "unknown": "請檢查操作詳情後重試。"
+    },
+    "usageHistory": {
+      "title": "本人本機工具事件",
+      "description": "依 UTC 日期保留最近 30 天的 Hook 事件。與下方模型請求和費用分開統計，事件次數不代表任務成功率。",
+      "connect": "連接組織後可查看本人的本機工具歷史。",
+      "clear": "清理本機歷史",
+      "clearNotice": "清理本人的本機事件歷史？待上傳事件和管理員統計不會被刪除。",
+      "confirmClear": "確認清理本人歷史",
+      "error": "讀取或清理歷史失敗，請檢查組織連接後重試。",
+      "loading": "正在讀取本機歷史…",
+      "runtime": "工具",
+      "all": "全部工具",
+      "day": "日期（UTC）",
+      "event": "事件",
+      "count": "事件數",
+      "observed": "最近觀察（UTC）",
+      "empty": "此工具暫無保留記錄。請在「組織與上報」啟用採集，再使用工具產生事件；不會補填過去的記錄。",
+      "events": {
+        "session_started": "工作階段開始",
+        "session_completed": "工作階段結束",
+        "prompt_submitted": "提交互動",
+        "turn_completed": "互動結束",
+        "tool_completed": "工具呼叫結束"
+      },
+      "registration": {
+        "installed": "Hook 已註冊",
+        "not_installed": "Hook 未註冊",
+        "needs_repair": "Hook 需要修復",
+        "unreadable": "無法讀取 Hook 設定",
+        "disabled_by_tool": "工具設定已停用 Hook"
+      },
+      "collection": {
+        "enabled": "採集已開啟",
+        "disabled": "採集已關閉"
+      },
+      "observation": {
+        "unobserved": "暫無保留的觀察事件",
+        "observed": "24 小時內觀察到事件",
+        "stale": "最近事件已超過 24 小時"
+      }
     }
   },
   "subscription": {

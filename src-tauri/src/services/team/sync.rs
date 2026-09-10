@@ -6,6 +6,7 @@ use std::{
     str::FromStr,
 };
 
+use super::rules;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -134,6 +135,7 @@ fn valid_connection_id(value: &str) -> bool {
 #[serde(rename_all = "snake_case")]
 pub enum SyncSupport {
     ToolSkill,
+    ToolRule,
     InactivePrompt,
     ManagedDownload,
 }
@@ -144,6 +146,8 @@ pub struct SyncPlanItem {
     pub drift: DriftStatus,
     pub support: SyncSupport,
     pub install_path: String,
+    #[serde(default)]
+    pub activation_path: Option<String>,
     pub previous_revision: Option<i64>,
     pub subscribed: bool,
     pub has_backup: bool,
@@ -262,6 +266,8 @@ struct UpstreamBackup {
     limits: Option<AssetLimits>,
     previous_state: Option<ManagedAssetState>,
     previous_prompt: Option<Prompt>,
+    #[serde(default)]
+    previous_rule: Option<rules::Snapshot>,
 }
 
 const UPSTREAM_BACKUP_FILE: &str = "upstream.json";
@@ -304,7 +310,7 @@ pub async fn preview_sync(
     load_plan(team, app_state, app, cancel, &repairs.errors).await
 }
 
-async fn load_plan(
+pub(super) async fn load_plan(
     team: &TeamService,
     app_state: &AppState,
     app: &str,
@@ -338,6 +344,19 @@ pub async fn sync_all(
     recover_known_installs(&team.state)?;
     let repairs = repair_pending_upstream(team, app_state)?;
     let plan = load_plan(team, app_state, app, cancel, &repairs.errors).await?;
+    apply_plan(team, app_state, app, overwrite_local, cancel, plan, None).await
+}
+
+// Caller holds TeamService::sync_operation and supplies a freshly validated plan.
+pub(super) async fn apply_plan(
+    team: &TeamService,
+    app_state: &AppState,
+    app: &str,
+    overwrite_local: &[SyncOverwriteDecision],
+    cancel: &Cancellation,
+    plan: SyncPlan,
+    deadline: Option<chrono::DateTime<Utc>>,
+) -> Result<SyncBatchResult, TeamSyncError> {
     let app_type = supported_app(app)?;
     let overwrite = overwrite_local
         .iter()
@@ -350,6 +369,9 @@ pub async fn sync_all(
     let mut remote_access_error: Option<(String, String)> = None;
 
     for item in &plan.items {
+        if deadline.is_some_and(|expires| expires <= Utc::now()) {
+            return Err(TeamError::Conflict.into());
+        }
         if cancel.is_cancelled() {
             return Err(TeamError::Cancelled.into());
         }
@@ -427,7 +449,7 @@ pub async fn sync_all(
                     None
                 };
                 current.pending_previous_upstream_fingerprint = None;
-                team.state.save_asset_state(&current)?;
+                team.state.save_installed_asset_state(&current)?;
             }
             results.push(result_for(item, SyncOutcome::Unchanged, None, None));
             continue;
@@ -525,15 +547,26 @@ pub async fn sync_all(
         };
         let previous_state = prior.cloned();
         let mut upstream_warning = None;
+        if deadline.is_some_and(|expires| expires <= Utc::now()) {
+            return Err(TeamError::Conflict.into());
+        }
+        // The canonical payload can already exist while its tool activation is missing or changed.
+        // Force the commit callback in that case, without changing the payload's bytes.
+        let rule_activation_only = item.support == SyncSupport::ToolRule
+            && item.disk_fingerprint.as_deref() == Some(item.asset.content_hash.as_str());
         let receipt = match install_verified_with_limits_and_commit(
             &item.asset,
             &bytes,
             &root,
             &relative,
-            prior.map(|state| state.local_hash.as_str()),
+            if rule_activation_only {
+                None
+            } else {
+                prior.map(|state| state.local_hash.as_str())
+            },
             Some(item.disk_fingerprint.as_deref()),
             InstallPolicy {
-                overwrite_local: overwrite_allowed,
+                overwrite_local: overwrite_allowed || rule_activation_only,
             },
             limits,
             |receipt| {
@@ -619,7 +652,7 @@ pub async fn sync_all(
                         .and_then(|state| state.last_synced_at.clone()),
                 };
                 team.state
-                    .save_asset_state(&next_state)
+                    .save_installed_asset_state(&next_state)
                     .map_err(|error| InstallError::Commit(error.to_string()))?;
                 if let Err(error) = integrate_with_upstream(
                     app_state,
@@ -662,7 +695,7 @@ pub async fn sync_all(
                 next_state.pending_disk_state = None;
                 next_state.pending_limits = None;
                 next_state.last_synced_at = Some(Utc::now().to_rfc3339());
-                if let Err(error) = team.state.save_asset_state(&next_state) {
+                if let Err(error) = team.state.save_installed_asset_state(&next_state) {
                     upstream_warning = Some(format!(
                         "The upstream item was updated, but its completion marker could not be saved: {error}"
                     ));
@@ -697,7 +730,7 @@ pub async fn sync_all(
         }
 
         let outcome = match item.support {
-            SyncSupport::ToolSkill => SyncOutcome::Installed,
+            SyncSupport::ToolSkill | SyncSupport::ToolRule => SyncOutcome::Installed,
             SyncSupport::InactivePrompt => SyncOutcome::ImportedInactive,
             SyncSupport::ManagedDownload => SyncOutcome::Downloaded,
         };
@@ -856,6 +889,10 @@ pub async fn restore_local_backup(
                     skill_target_after_remove(app_state, &connection, &app_type, &current_item)
                         .map_err(|error| InstallError::Commit(error.to_string()))?,
                 ),
+                AssetKind::Rule if rules::supported(&app_type) => Some(rules::fingerprint(&match previous.previous_rule.clone() {
+                    Some(snapshot) => snapshot,
+                    None => rules::desired(&app_type,&connection.id,asset_id,None).map_err(InstallError::Commit)?,
+                })),
                 AssetKind::Rule | AssetKind::Workflow | AssetKind::Agent => None,
             };
             restored_state.upstream_backup_path = Some(
@@ -965,6 +1002,11 @@ fn write_upstream_backup_at(
         limits: Some(limits.clone()),
         previous_state: previous_state.cloned(),
         previous_prompt,
+        previous_rule: if item.kind == AssetKind::Rule && rules::supported(app) {
+            Some(rules::read(app, &connection.id, item.asset_id)?)
+        } else {
+            None
+        },
     })
     .map_err(|error| error.to_string())?;
     let path = backup_dir.join(UPSTREAM_BACKUP_FILE);
@@ -979,7 +1021,12 @@ fn write_upstream_backup_at(
 
 fn read_upstream_backup(root: &Path, backup_dir: &Path) -> Result<UpstreamBackup, TeamSyncError> {
     let backup_root = root.join(".nexusops-team").join("backups");
-    if backup_dir.parent() != Some(backup_root.as_path())
+    if !backup_dir
+        .parent()
+        .is_some_and(|parent| paths_resolve_equal(parent, &backup_root))
+        || backup_dir
+            .components()
+            .any(|component| matches!(component, std::path::Component::ParentDir))
         || backup_dir
             .file_name()
             .and_then(|name| name.to_str())
@@ -989,6 +1036,28 @@ fn read_upstream_backup(root: &Path, backup_dir: &Path) -> Result<UpstreamBackup
         return Err(TeamSyncError::Local(
             "the selected Team backup path is outside the managed backup directory".into(),
         ));
+    }
+    for directory in [
+        root.to_path_buf(),
+        root.join(".nexusops-team"),
+        backup_root,
+        backup_dir.to_path_buf(),
+    ] {
+        let metadata = directory
+            .symlink_metadata()
+            .map_err(|_| TeamSyncError::Local("the Team backup directory is unavailable".into()))?;
+        #[cfg(windows)]
+        let reparse = {
+            use std::os::windows::fs::MetadataExt;
+            metadata.file_attributes() & 0x400 != 0
+        };
+        #[cfg(not(windows))]
+        let reparse = false;
+        if !metadata.is_dir() || metadata.file_type().is_symlink() || reparse {
+            return Err(TeamSyncError::Local(
+                "the Team backup directory crosses an unsafe link".into(),
+            ));
+        }
     }
     let path = backup_dir.join(UPSTREAM_BACKUP_FILE);
     let metadata = path
@@ -1094,6 +1163,19 @@ fn apply_upstream_backup(
                 SkillService::remove_team_managed(&app_state.db, app, &id, directory)
                     .map_err(|error| error.to_string())?;
             }
+        }
+        AssetKind::Rule if rules::supported(app) => {
+            let target = match backup.previous_rule.clone() {
+                Some(snapshot) => snapshot,
+                None => rules::desired(app, &connection.id, asset_id, None)?,
+            };
+            rules::apply(
+                app,
+                &connection.id,
+                asset_id,
+                &target,
+                expected_upstream_fingerprint,
+            )?;
         }
         AssetKind::Rule | AssetKind::Workflow | AssetKind::Agent => {}
     }
@@ -1296,7 +1378,11 @@ fn repair_one_pending(
     managed.pending_target_upstream_fingerprint = None;
     managed.pending_disk_state = None;
     managed.pending_limits = None;
-    team.state.save_asset_state(&managed)?;
+    if is_local_restore {
+        team.state.save_asset_state(&managed)?;
+    } else {
+        team.state.save_installed_asset_state(&managed)?;
+    }
     Ok(())
 }
 
@@ -1516,6 +1602,14 @@ fn build_plan(
         );
         items.push(SyncPlanItem {
             install_path: root.join(&relative).to_string_lossy().into_owned(),
+            activation_path: if asset.kind == AssetKind::Rule && rules::supported(app_type) {
+                Some(
+                    rules::activation_path(app_type, &connection.id, asset.asset_id)
+                        .map_err(TeamSyncError::Local)?,
+                )
+            } else {
+                None
+            },
             previous_revision: prior.map(|state| state.revision),
             subscribed: prior.is_some_and(|state| state.subscribed),
             has_backup: history.is_some_and(|state| {
@@ -1560,6 +1654,7 @@ fn failed_plan_item(
 ) -> SyncPlanItem {
     let marker = local_state_marker(&format!("inspection_error:{message}"), None);
     SyncPlanItem {
+        activation_path: None,
         decision_token: sync_decision_token(
             &connection.id,
             app.as_str(),
@@ -1594,6 +1689,31 @@ fn effective_local_hash(
     disk_hash: Option<String>,
     limits: ContentLimits,
 ) -> Result<(Option<String>, Option<String>), TeamSyncError> {
+    if item.kind == AssetKind::Rule && rules::supported(app) {
+        let current =
+            rules::read(app, &connection.id, item.asset_id).map_err(TeamSyncError::Local)?;
+        let fingerprint = rules::fingerprint(&current);
+        let recorded = prior.and_then(|state| state.upstream_fingerprint.as_deref());
+        if recorded == Some(fingerprint.as_str()) && current.body.is_some() {
+            return Ok((disk_hash, Some(fingerprint)));
+        }
+        if (recorded.is_none() || recorded == Some(fingerprint.as_str()))
+            && current.body.is_none()
+            && (disk_hash.is_none()
+                || disk_hash.as_deref()
+                    == Some(
+                        prior
+                            .map(|state| state.local_hash.as_str())
+                            .unwrap_or(&item.content_hash),
+                    ))
+        {
+            return Ok((None, Some(fingerprint)));
+        }
+        return Ok((
+            Some(local_state_marker(&fingerprint, disk_hash.as_deref())),
+            Some(fingerprint),
+        ));
+    }
     if !matches!(item.kind, AssetKind::Prompt | AssetKind::Skill) {
         return Ok((disk_hash, None));
     }
@@ -1696,6 +1816,9 @@ fn current_upstream_fingerprint(
                 None,
             )))
         }
+        AssetKind::Rule if rules::supported(app) => Ok(Some(rules::fingerprint(
+            &rules::read(app, &connection.id, item.asset_id).map_err(TeamSyncError::Local)?,
+        ))),
         AssetKind::Rule | AssetKind::Workflow | AssetKind::Agent => Ok(None),
     }
 }
@@ -1780,7 +1903,7 @@ fn skill_target_after_remove(
 
 fn target_upstream_fingerprint(
     connection: &TeamConnection,
-    _app: &AppType,
+    app: &AppType,
     item: &ManifestItem,
     install_path: &Path,
     local_hash: &str,
@@ -1798,6 +1921,15 @@ fn target_upstream_fingerprint(
                 None,
             )))
         }
+        AssetKind::Rule if rules::supported(app) => Ok(Some(rules::fingerprint(
+            &rules::desired(
+                app,
+                &connection.id,
+                item.asset_id,
+                Some(rules::payload(install_path).map_err(TeamSyncError::Local)?),
+            )
+            .map_err(TeamSyncError::Local)?,
+        ))),
         AssetKind::Rule | AssetKind::Workflow | AssetKind::Agent => Ok(None),
     }
 }
@@ -1943,6 +2075,8 @@ fn target_for_kind(
     };
     let support = if *kind == AssetKind::Prompt {
         SyncSupport::InactivePrompt
+    } else if *kind == AssetKind::Rule && rules::supported(app) {
+        SyncSupport::ToolRule
     } else {
         SyncSupport::ManagedDownload
     };
@@ -2066,6 +2200,21 @@ fn integrate_with_upstream(
             )
             .map_err(|error| error.to_string())?;
         }
+        AssetKind::Rule if rules::supported(app) => {
+            let target = rules::desired(
+                app,
+                &connection.id,
+                item.asset_id,
+                Some(rules::payload(install_path)?),
+            )?;
+            rules::apply(
+                app,
+                &connection.id,
+                item.asset_id,
+                &target,
+                expected_upstream_fingerprint,
+            )?;
+        }
         AssetKind::Rule | AssetKind::Workflow | AssetKind::Agent => {}
     }
     Ok(())
@@ -2181,12 +2330,186 @@ mod tests {
         let (root, relative, support) = target_for(&connection(), &AppType::Codex, &item).unwrap();
         assert!(root.starts_with(temp.path()));
         assert_eq!(relative, PathBuf::from("rules/asset-17.md"));
-        assert_eq!(support, SyncSupport::ManagedDownload);
+        assert_eq!(support, SyncSupport::ToolRule);
         assert!(!root
             .join(relative)
             .to_string_lossy()
             .contains("remote-name"));
         std::env::remove_var("NEXUSOPS_CLIENT_TEST_HOME");
+    }
+
+    #[tokio::test]
+    #[serial]
+    async fn rules_upgrade_legacy_payloads_activate_and_restore_native_instructions() {
+        use axum::{http::HeaderMap, routing::get, Json, Router};
+        use serde_json::json;
+        struct RestoreHome(Option<std::ffi::OsString>);
+        impl Drop for RestoreHome {
+            fn drop(&mut self) {
+                if let Some(previous) = self.0.as_ref() {
+                    std::env::set_var("NEXUSOPS_CLIENT_TEST_HOME", previous);
+                } else {
+                    std::env::remove_var("NEXUSOPS_CLIENT_TEST_HOME");
+                }
+                let _ = crate::settings::reload_settings();
+            }
+        }
+        let _restore = RestoreHome(std::env::var_os("NEXUSOPS_CLIENT_TEST_HOME"));
+        for app in ["codex", "claude"] {
+            let temp = tempfile::tempdir().unwrap();
+            std::env::set_var("NEXUSOPS_CLIENT_TEST_HOME", temp.path());
+            crate::settings::reload_settings().unwrap();
+            let body = b"# Team standard\nUse checked arithmetic.\n";
+            let mut item = text_item(17, AssetKind::Rule, body);
+            item.slug = "team-rule".into();
+            let served = item.clone();
+            let router=Router::new()
+                .route("/api/v1/me/team-profile",get(|headers:HeaderMap|async move{let mut profile=fixture_profile();profile.gateway_url=format!("http://{}/",headers.get("host").unwrap().to_str().unwrap());profile.base_url=format!("{}v1",profile.gateway_url);Json(json!({"code":0,"data":profile}))}))
+                .route("/api/v1/me/assets/manifest",get(move ||{let served=served.clone();async move{Json(json!({"code":0,"data":{"schema_version":1,"assets":[served],"conflicts":[]}}))}}))
+                .route("/api/v1/assets/17/revisions/1/download",get(move ||async move{body.to_vec()}));
+            let (gateway, server) = super::super::api::tests::serve(router).await;
+            let team = TeamService::with_credentials(
+                &temp.path().join("state"),
+                Arc::new(MemoryCredentialStore::default()),
+            )
+            .unwrap();
+            let app_state = AppState::new(Arc::new(Database::memory().unwrap()));
+            let cancel = Cancellation::default();
+            let connection = team
+                .connect(&gateway, "nx_rule_fixture", &cancel)
+                .await
+                .unwrap();
+            let app_type = supported_app(app).unwrap();
+            let (root, relative, _) = target_for(&connection, &app_type, &item).unwrap();
+            fs::create_dir_all(&root).unwrap();
+            let receipt = super::super::install::install_verified(
+                &item,
+                body,
+                &root,
+                &relative,
+                None,
+                InstallPolicy::default(),
+            )
+            .unwrap();
+            let metadata:ManagedAssetState=serde_json::from_value(json!({"connection_id":connection.id,"app":app,"asset_id":17,"asset_kind":"rule","revision":1,"content_hash":item.content_hash,"local_hash":receipt.local_hash,"install_root":root,"relative_path":relative,"install_path":receipt.install_path,"subscribed":true,"last_synced_at":Utc::now().to_rfc3339()})).unwrap();
+            team.state.save_asset_state(&metadata).unwrap();
+            let personal = if app == "codex" {
+                crate::codex_config::get_codex_config_dir().join("AGENTS.md")
+            } else {
+                crate::config::get_claude_config_dir().join("rules/personal.md")
+            };
+            fs::create_dir_all(personal.parent().unwrap()).unwrap();
+            fs::write(&personal, "Personal guidance\r\n").unwrap();
+            let plan = preview_sync(&team, &app_state, app, &cancel).await.unwrap();
+            assert_eq!(plan.items[0].support, SyncSupport::ToolRule);
+            assert_eq!(plan.items[0].drift, DriftStatus::NotInstalled);
+            assert!(plan.items[0].activation_path.is_some());
+            let installed = sync_all(&team, &app_state, app, &[], &cancel)
+                .await
+                .unwrap();
+            assert_eq!(installed.items[0].outcome, SyncOutcome::Installed);
+            assert_eq!(
+                rules::read(&app_type, &connection.id, 17)
+                    .unwrap()
+                    .body
+                    .as_deref(),
+                Some(std::str::from_utf8(body).unwrap())
+            );
+            assert!(fs::read_to_string(&personal)
+                .unwrap()
+                .starts_with("Personal guidance\r\n"));
+            let unchanged = sync_all(&team, &app_state, app, &[], &cancel)
+                .await
+                .unwrap();
+            assert_eq!(unchanged.items[0].outcome, SyncOutcome::Unchanged);
+            let active =
+                PathBuf::from(rules::activation_path(&app_type, &connection.id, 17).unwrap());
+            let edited = fs::read_to_string(&active)
+                .unwrap()
+                .replace(std::str::from_utf8(body).unwrap(), "Local override.\n");
+            fs::write(&active, &edited).unwrap();
+            let conflict = sync_all(&team, &app_state, app, &[], &cancel)
+                .await
+                .unwrap();
+            assert_eq!(conflict.items[0].outcome, SyncOutcome::Conflict);
+            assert_eq!(fs::read_to_string(&active).unwrap(), edited);
+            let plan = preview_sync(&team, &app_state, app, &cancel).await.unwrap();
+            let replaced = sync_all(
+                &team,
+                &app_state,
+                app,
+                &[SyncOverwriteDecision {
+                    asset_id: 17,
+                    decision_token: plan.items[0].decision_token.clone(),
+                }],
+                &cancel,
+            )
+            .await
+            .unwrap();
+            assert_eq!(replaced.items[0].outcome, SyncOutcome::Installed);
+            let restored = restore_local_backup(&team, &app_state, app, 17)
+                .await
+                .unwrap();
+            assert!(restored.restored);
+            let intent:super::super::state::teamai::AckIntent=serde_json::from_value(json!({
+                "project":{"id":1,"name":"Fixture","organization_id":"local","workspace_id":"local","member_id":11},
+                "command":{"command_id":"a".repeat(64),"asset_id":17,"revision_id":1,"kind":"rule","type":"install_rule","runtime":if app=="claude"{"claude-code"}else{"codex"},"content_hash":item.content_hash,"download_url":"/api/v1/assets/17/revisions/1/download","issued_at":Utc::now(),"expires_at":Utc::now()+chrono::Duration::minutes(29),"outcome":null}
+            })).unwrap();
+            team.state
+                .prepare_teamai_ack(&connection.id, app, &intent)
+                .unwrap();
+            team.state
+                .record_teamai_outcome(
+                    &connection.id,
+                    &intent.command.command_id,
+                    super::super::api::teamai::Outcome::Conflict,
+                )
+                .unwrap();
+            let mut interrupted = team.state.asset_states(&connection.id).unwrap().remove(0);
+            interrupted.upstream_pending = true;
+            interrupted.upstream_backup_path = Some(
+                Path::new(interrupted.backup_root_path.as_ref().unwrap())
+                    .join(UPSTREAM_BACKUP_FILE)
+                    .to_string_lossy()
+                    .into_owned(),
+            );
+            interrupted.pending_disk_state =
+                Some(PendingDiskState::Hash(interrupted.local_hash.clone()));
+            interrupted.pending_target_upstream_fingerprint = current_upstream_fingerprint(
+                &app_state,
+                &connection,
+                &app_type,
+                &item,
+                ContentLimits::default(),
+            )
+            .unwrap();
+            interrupted.pending_previous_upstream_fingerprint =
+                interrupted.pending_target_upstream_fingerprint.clone();
+            team.state.save_asset_state(&interrupted).unwrap();
+            repair_one_pending(
+                &team,
+                &app_state,
+                &connection,
+                interrupted,
+                ContentLimits::default(),
+            )
+            .unwrap();
+            assert_eq!(
+                team.state.pending_teamai_acks(&connection.id, app).unwrap()[0].outcome,
+                Some(super::super::api::teamai::Outcome::Conflict)
+            );
+            assert_eq!(
+                rules::read(&app_type, &connection.id, 17)
+                    .unwrap()
+                    .body
+                    .as_deref(),
+                Some("Local override.\n")
+            );
+            assert!(fs::read_to_string(&personal)
+                .unwrap()
+                .starts_with("Personal guidance\r\n"));
+            server.abort();
+        }
     }
 
     #[test]
@@ -2201,11 +2524,45 @@ mod tests {
             limits: Some(stored.clone()),
             previous_state: None,
             previous_prompt: None,
+            previous_rule: None,
         };
         let selected = restore_content_limits(&backup, &current).unwrap();
         assert_eq!(selected.max_text_bytes, stored.max_text_bytes);
         assert_eq!(selected.max_unpacked_bytes, stored.max_unpacked_bytes);
         assert_eq!(selected.max_files as u64, stored.max_files);
+    }
+
+    #[test]
+    fn upstream_backup_alias_is_rejected_even_when_canonical_parents_match() {
+        let temp = tempfile::tempdir().unwrap();
+        let control = temp.path().join(".nexusops-team");
+        fs::create_dir(&control).unwrap();
+        let outside = temp.path().join("outside");
+        fs::create_dir(&outside).unwrap();
+        let link = control.join("backups");
+        #[cfg(unix)]
+        std::os::unix::fs::symlink(&outside, &link).unwrap();
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            assert!(std::process::Command::new("cmd.exe")
+                .args(["/d", "/c", "mklink", "/J"])
+                .arg(&link)
+                .arg(&outside)
+                .creation_flags(0x08000000)
+                .output()
+                .unwrap()
+                .status
+                .success());
+        }
+        let name = uuid::Uuid::new_v4().to_string();
+        fs::create_dir(outside.join(&name)).unwrap();
+        fs::write(
+            outside.join(&name).join(UPSTREAM_BACKUP_FILE),
+            r#"{"version":1,"previous_state":null,"previous_prompt":null}"#,
+        )
+        .unwrap();
+        assert!(read_upstream_backup(temp.path(), &link.join(name)).is_err());
     }
 
     #[test]
@@ -2662,6 +3019,7 @@ mod tests {
                 limits: None,
                 previous_state: Some(codex_state.clone()),
                 previous_prompt: None,
+                previous_rule: None,
             },
             ContentLimits::default(),
             None,

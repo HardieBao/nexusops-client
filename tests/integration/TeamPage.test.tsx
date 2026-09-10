@@ -25,6 +25,10 @@ const api = vi.hoisted(() => ({
   applyTeamProvider: vi.fn(),
   activateTeamProvider: vi.fn(),
   previewTeamSync: vi.fn(),
+  previewTeamAI: vi.fn(),
+  applyTeamAI: vi.fn(),
+  retryTeamAIAcknowledgements: vi.fn(),
+  getTeamAIAcknowledgementStatus: vi.fn(),
   syncTeam: vi.fn(),
   restoreTeamBackup: vi.fn(),
 }));
@@ -69,6 +73,18 @@ const connection = {
 };
 
 beforeEach(() => {
+  api.getTeamAIAcknowledgementStatus
+    .mockReset()
+    .mockResolvedValue({
+      connection,
+      status: { pending: 0, last_error: null },
+    });
+  api.previewTeamAI.mockReset().mockRejectedValue({
+    code: "upgrade_required",
+    message: "Legacy gateway fixture",
+  });
+  api.applyTeamAI.mockReset();
+  api.retryTeamAIAcknowledgements.mockReset();
   api.previewTeamProvider.mockReset();
   api.applyTeamProvider.mockReset();
   api.activateTeamProvider.mockReset();

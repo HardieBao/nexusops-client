@@ -1,4 +1,13 @@
 {
+  "teamOperation": {
+    "running": "An operation is running. You can stop its remaining steps.",
+    "stop": "Stop current operation",
+    "settling": "Waiting for the current operation to finish safely. Completed writes will be kept.",
+    "waiting": "Finishing safely…",
+    "stopped": "Further steps have stopped. Completed writes were not rolled back. Preview again to verify the current state.",
+    "cancelFailed": "The stop request could not be delivered. The operation has finished; check the local result.",
+    "recoveryFailed": "The current request has ended, but the local result could not be confirmed. Writes may remain or still be settling; check again before continuing."
+  },
   "clientNavigation": {
     "home": "Workspace",
     "providers": "Tool connections",
@@ -3278,6 +3287,16 @@
     "suggestedDefaultsHint": "Use this preset's recommended default model configuration"
   },
   "team": {
+    "candidate": {
+      "title": "Prepare a TeamAI asset",
+      "description": "Convert a local Skill directory or Rule file into a candidate for administrator review and import.",
+      "skill": "Choose Skill directory",
+      "rule": "Choose Rule file",
+      "working": "Preparing the candidate…",
+      "ready": "Candidate ready: {{name}}",
+      "next": "The file is ready for administrator import. Publishing still requires the normal review process.",
+      "error": "Conversion could not finish. Check the source and choose a new output file outside the source directory."
+    },
     "title": "Team",
     "status": {
       "connected": "Connected",
@@ -3369,8 +3388,16 @@
       "restoreConfirmDescription": "The current local file will be replaced. NexusOps creates a new undo backup before restoring.",
       "restoreConfirmTarget": "Target tool: {{app}}.",
       "restoreConfirm": "Replace and restore",
+      "activationPath": "Tool instruction file: {{path}}",
+      "legacySync": "This gateway does not support result acknowledgements yet. Compatible asset sync remains available.",
+      "ackTitle": "Sync confirmation",
+      "ackWaiting": "{{count}} Skill / Rule results are waiting for confirmation. Retrying confirmation does not reinstall files.",
+      "ackConfirmed": "{{count}} Skill / Rule results confirmed.",
+      "ackSuperseded": "{{count}} results no longer match the current authorization or revision. Preview again before syncing.",
+      "retryAck": "Retry confirmation",
       "support": {
         "tool_skill": "Install in the tool's Skill directory",
+        "tool_rule": "Activate in the tool's instructions",
         "inactive_prompt": "Import as an inactive Prompt",
         "managed_download": "Download to the Team-managed directory"
       },
@@ -3428,6 +3455,8 @@
       "restore_refresh_failed": "Backup restored; remote refresh failed"
     },
     "errorActions": {
+      "upgrade_required": "Upgrade the gateway to confirm these results. Local files are retained.",
+      "rate_limited": "The gateway is rate limited. Confirmation will retry after the waiting period while the client is running.",
       "invalid_gateway": "Enter an HTTP(S) Gateway service URL without credentials, query, or fragment.",
       "insecure_gateway": "Use HTTPS. Plain HTTP is accepted only for a literal loopback address.",
       "foreign_url": "Refresh the Team Profile; the asset URL did not match the connected Gateway.",
@@ -3470,6 +3499,46 @@
       "upstream_pending": "The local file is safe, but the Prompt or Skill catalog still needs recovery.",
       "restore_refresh_failed": "The backup is already restored. Only the remote refresh failed; do not repeat Restore unless you want to undo it.",
       "unknown": "Review the operation details and retry."
+    },
+    "usageHistory": {
+      "title": "My local tool events",
+      "description": "Hook events retained for 30 UTC calendar days. These are separate from model requests and costs below. Event counts do not measure task success.",
+      "connect": "Connect to an organization to view your local tool history.",
+      "clear": "Clear local history",
+      "clearNotice": "Clear your local event history? Pending uploads and administrator statistics are unchanged.",
+      "confirmClear": "Clear my history",
+      "error": "Could not read or clear history. Try again after checking the organization connection.",
+      "loading": "Loading local history…",
+      "runtime": "Tool",
+      "all": "All tools",
+      "day": "Date (UTC)",
+      "event": "Event",
+      "count": "Events",
+      "observed": "Last observed (UTC)",
+      "empty": "No retained events for this tool. Enable collection under Organization & reporting and use the tool to generate events. Historical data is not backfilled.",
+      "events": {
+        "session_started": "Session started",
+        "session_completed": "Session ended",
+        "prompt_submitted": "Prompt submitted",
+        "turn_completed": "Turn ended",
+        "tool_completed": "Tool call ended"
+      },
+      "registration": {
+        "installed": "Hook registered",
+        "not_installed": "Hook missing",
+        "needs_repair": "Hook needs repair",
+        "unreadable": "Hook configuration unreadable",
+        "disabled_by_tool": "Hooks disabled by tool settings"
+      },
+      "collection": {
+        "enabled": "Collection enabled",
+        "disabled": "Collection disabled"
+      },
+      "observation": {
+        "unobserved": "No retained event observed",
+        "observed": "Event observed within 24 hours",
+        "stale": "Last event over 24 hours ago"
+      }
     }
   },
   "subscription": {

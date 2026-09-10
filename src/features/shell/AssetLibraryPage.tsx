@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import type { ClientView } from "./navigation";
+import { TeamAICandidatePanel } from "@/features/team/TeamAICandidatePanel";
 
 export function AssetLibraryPage({
   teamEnabled,
@@ -55,6 +56,7 @@ export function AssetLibraryPage({
       >
         {t("clientNavigation.skillsDiscovery")}
       </Button>
+      {teamEnabled && <TeamAICandidatePanel />}
     </div>
   );
 }

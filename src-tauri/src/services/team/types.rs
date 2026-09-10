@@ -205,6 +205,10 @@ pub enum TeamError {
     NotFound,
     #[error("The server state changed; refresh before retrying")]
     Conflict,
+    #[error("This gateway does not support the required TeamAI protocol; upgrade the gateway before using this feature")]
+    UpgradeRequired,
+    #[error("The gateway rate limit was reached; retry after {retry_after_seconds} seconds")]
+    RateLimited { retry_after_seconds: u64 },
     #[error("The gateway is temporarily unavailable")]
     Unavailable,
     #[error("The request timed out")]
@@ -240,6 +244,8 @@ impl TeamError {
             Self::AccessDenied => "access_denied",
             Self::NotFound => "not_found",
             Self::Conflict => "conflict",
+            Self::UpgradeRequired => "upgrade_required",
+            Self::RateLimited { .. } => "rate_limited",
             Self::Unavailable => "unavailable",
             Self::Timeout => "timeout",
             Self::Cancelled => "cancelled",

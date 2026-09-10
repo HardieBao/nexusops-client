@@ -1,4 +1,13 @@
 {
+  "teamOperation": {
+    "running": "当前操作正在执行，可以停止后续步骤。",
+    "stop": "停止当前操作",
+    "settling": "正在等待当前操作安全结束，已完成的写入会保留。",
+    "waiting": "正在收尾…",
+    "stopped": "已停止后续步骤，已完成的写入不会回滚。请重新预览，确认当前状态。",
+    "cancelFailed": "停止请求未能送达。当前操作已结束，请检查本机结果。",
+    "recoveryFailed": "当前请求已结束，但无法确认本机结果。写入可能仍在收尾或已保留，请重新检查。"
+  },
   "clientNavigation": {
     "home": "工作台",
     "providers": "工具接入",
@@ -3278,6 +3287,16 @@
     "suggestedDefaultsHint": "使用此预设推荐的默认模型配置"
   },
   "team": {
+    "candidate": {
+      "title": "准备 TeamAI 资产",
+      "description": "将本机 Skill 目录或 Rule 文件转换为候选文件，供管理员审核导入。",
+      "skill": "选择 Skill 目录",
+      "rule": "选择 Rule 文件",
+      "working": "正在准备候选文件…",
+      "ready": "候选文件已生成：{{name}}",
+      "next": "请将文件交由管理员导入；发布仍需经过原有审核流程。",
+      "error": "转换未完成，请检查源文件，并在源目录之外选择新的输出文件。"
+    },
     "title": "团队",
     "status": {
       "connected": "已连接",
@@ -3369,8 +3388,16 @@
       "restoreConfirmDescription": "当前本地文件将被替换；NexusOps 会先创建新的撤销备份。",
       "restoreConfirmTarget": "目标工具：{{app}}。",
       "restoreConfirm": "替换并恢复",
+      "activationPath": "工具加载入口：{{path}}",
+      "legacySync": "网关版本暂不支持结果确认，当前使用兼容资产同步。",
+      "ackTitle": "同步结果确认",
+      "ackWaiting": "{{count}} 条 Skill / Rule 结果等待确认；重试确认不会重新安装文件。",
+      "ackConfirmed": "已确认 {{count}} 条 Skill / Rule 同步结果。",
+      "ackSuperseded": "{{count}} 条结果的授权或版本已变化，请重新预览后再同步。",
+      "retryAck": "重试确认",
       "support": {
         "tool_skill": "安装到工具 Skill 目录",
+        "tool_rule": "接入工具实际加载的规则",
         "inactive_prompt": "导入为未启用 Prompt",
         "managed_download": "下载到 Team 受管目录"
       },
@@ -3428,6 +3455,8 @@
       "restore_refresh_failed": "备份已恢复，仅远端刷新失败"
     },
     "errorActions": {
+      "upgrade_required": "请升级网关后再确认这些结果，本地文件会保留。",
+      "rate_limited": "网关已限流；客户端运行期间会在等待时间结束后重试确认。",
       "invalid_gateway": "请输入不含凭据、查询参数或片段的 HTTP(S) Gateway 服务地址。",
       "insecure_gateway": "请使用 HTTPS；只有明确的本机回环地址允许 HTTP。",
       "foreign_url": "请刷新 Team Profile；资产地址与当前 Gateway 不一致。",
@@ -3470,6 +3499,46 @@
       "upstream_pending": "本地文件安全，但 Prompt 或 Skill 目录仍需恢复。",
       "restore_refresh_failed": "备份已经恢复，仅远端刷新失败；除非要撤销恢复，否则不要再次点击恢复。",
       "unknown": "请检查操作详情后重试。"
+    },
+    "usageHistory": {
+      "title": "本人本机工具事件",
+      "description": "按 UTC 日期保留最近 30 天的 Hook 事件。与下方模型请求和费用分开统计，事件次数不代表任务成功率。",
+      "connect": "连接组织后可查看本人的本机工具历史。",
+      "clear": "清理本机历史",
+      "clearNotice": "清理本人的本机事件历史？待上传事件和管理员统计不会被删除。",
+      "confirmClear": "确认清理本人历史",
+      "error": "读取或清理历史失败，请检查组织连接后重试。",
+      "loading": "正在读取本机历史…",
+      "runtime": "工具",
+      "all": "全部工具",
+      "day": "日期（UTC）",
+      "event": "事件",
+      "count": "事件数",
+      "observed": "最近观察（UTC）",
+      "empty": "该工具暂无保留记录。请在“组织与上报”启用采集，再使用工具产生事件；不会补填过去的记录。",
+      "events": {
+        "session_started": "会话开始",
+        "session_completed": "会话结束",
+        "prompt_submitted": "提交交互",
+        "turn_completed": "交互结束",
+        "tool_completed": "工具调用结束"
+      },
+      "registration": {
+        "installed": "Hook 已注册",
+        "not_installed": "Hook 未注册",
+        "needs_repair": "Hook 需要修复",
+        "unreadable": "无法读取 Hook 配置",
+        "disabled_by_tool": "工具配置已禁用 Hook"
+      },
+      "collection": {
+        "enabled": "采集已开启",
+        "disabled": "采集已关闭"
+      },
+      "observation": {
+        "unobserved": "暂无保留的观察事件",
+        "observed": "24 小时内观察到事件",
+        "stale": "最近事件已超过 24 小时"
+      }
     }
   },
   "subscription": {

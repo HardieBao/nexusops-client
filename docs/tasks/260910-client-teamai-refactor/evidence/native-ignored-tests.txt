@@ -1,0 +1,15 @@
+config::tests::atomic_write_replaces_existing_wsl_unc_file: test
+database::backup::tests::perf_backup_export_import_paths: test
+database::backup::tests::perf_import_phases: test
+services::s3::integration_tests::live_s3_connection: test
+services::s3::integration_tests::live_s3_put_get_head_roundtrip: test
+services::session_usage_codex::tests::replay_real_codex_corpus: test
+services::team::credentials::windows_tests::os_credential_round_trip_leaves_no_entry: test
+services::team::provider::tests::real_gateway_provider_import_activation_and_model_request: test
+services::team::rules::tests::real_claude_cli_loads_the_managed_rule_file: test
+services::team::rules::tests::real_codex_cli_loads_the_managed_instruction_block: test
+services::team::sync::tests::real_gateway_sync_is_idempotent_and_protects_local_edits: test
+services::team::tests::real_gateway_connect_refresh_and_verified_download: test
+services::team::worker::tests::bundled_worker_runs_from_rust_without_global_node: test
+services::team::worker::tests::cancellation_and_excessive_diagnostics_end_the_worker: test
+services::team::worker::tests::timed_out_worker_is_reaped_before_returning: test

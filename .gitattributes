@@ -16,6 +16,9 @@
 *.tsx text eol=lf
 *.js text eol=lf
 *.jsx text eol=lf
+third_party/teamai/** text eol=lf
+# Keep the upstream license byte-identical, including its original trailing space.
+third_party/teamai/LICENSE whitespace=-blank-at-eol
 
 # HTML/CSS files
 *.html text eol=lf

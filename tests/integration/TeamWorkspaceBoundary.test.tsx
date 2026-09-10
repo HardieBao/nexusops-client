@@ -14,6 +14,10 @@ import type { TeamConnection, SyncPlan } from "@/features/team/api";
 const api = vi.hoisted(() => ({
   getTeamStatus: vi.fn(),
   previewTeamSync: vi.fn(),
+  previewTeamAI: vi.fn(),
+  applyTeamAI: vi.fn(),
+  retryTeamAIAcknowledgements: vi.fn(),
+  getTeamAIAcknowledgementStatus: vi.fn(),
   getTeamLocalHistory: vi.fn(),
   cancelTeamOperation: vi.fn(),
   connectTeam: vi.fn(),
@@ -74,6 +78,14 @@ const plan: SyncPlan = {
 beforeEach(() => {
   for (const mock of Object.values(api)) mock.mockReset();
   api.getTeamStatus.mockResolvedValue(connection);
+  api.getTeamAIAcknowledgementStatus.mockResolvedValue({
+    connection,
+    status: { pending: 0, last_error: null },
+  });
+  api.previewTeamAI.mockReset().mockRejectedValue({
+    code: "upgrade_required",
+    message: "Legacy gateway fixture",
+  });
   api.previewTeamSync.mockResolvedValue(plan);
   api.getTeamLocalHistory.mockResolvedValue([]);
   api.cancelTeamOperation.mockResolvedValue(undefined);
@@ -110,6 +122,43 @@ describe("shared Team operation ownership", () => {
     expect(api.cancelTeamOperation).not.toHaveBeenCalled();
     view.unmount();
     expect(api.cancelTeamOperation).toHaveBeenCalledTimes(1);
+  });
+  it("polls local confirmations only while the assets page is visible", async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    const element = (section: TeamSection) => (
+      <QueryClientProvider client={queryClient}>
+        <TeamWorkspaceBoundary active initialApp="codex" onBusyChange={vi.fn()}>
+          <TeamPage section={section} />
+        </TeamWorkspaceBoundary>
+      </QueryClientProvider>
+    );
+    const view = render(element("organization"));
+    await screen.findByText(connection.profile.name);
+    await waitFor(() => expect(api.previewTeamSync).toHaveBeenCalledTimes(1));
+    expect(api.getTeamAIAcknowledgementStatus).not.toHaveBeenCalled();
+    vi.useFakeTimers();
+    try {
+      view.rerender(element("assets"));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(api.getTeamAIAcknowledgementStatus).toHaveBeenCalledTimes(1);
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15000);
+      });
+      expect(api.getTeamAIAcknowledgementStatus).toHaveBeenCalledTimes(2);
+      view.rerender(element("organization"));
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(30000);
+      });
+      expect(api.getTeamAIAcknowledgementStatus).toHaveBeenCalledTimes(2);
+    } finally {
+      view.unmount();
+      queryClient.clear();
+      vi.useRealTimers();
+    }
   });
   it("does not mount Team commands when the build feature is disabled", () => {
     render(

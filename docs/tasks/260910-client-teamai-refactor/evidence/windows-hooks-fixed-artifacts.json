@@ -1,0 +1,18 @@
+{
+  "status": "built; new package native revalidation pending",
+  "artifacts": [
+    {
+      "bytes": 36239872,
+      "sha256": "7f5520dc27407021859456100fc220161143cd6b5cf08fea5342e7eb6d0fceb3",
+      "path": "D:\\Hardie作品\\nexusops-client\\src-tauri\\target\\x86_64-pc-windows-msvc\\release\\nexusops-client.exe"
+    },
+    {
+      "bytes": 33767762,
+      "sha256": "b6524f50c6e72ce444afbb1c43dc74b7d1b6641fc0bd55bee1e33222d92ca59a",
+      "path": "D:\\Hardie作品\\nexusops-client\\src-tauri\\target\\x86_64-pc-windows-msvc\\release\\bundle\\nsis\\NexusOps Client_0.1.0_x64-setup.exe"
+    }
+  ],
+  "client_state": "uncommitted working tree",
+  "server_checkpoint": "23a56574",
+  "built_at": "2026-09-11T04:29:12.0576305+08:00"
+}

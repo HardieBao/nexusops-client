@@ -8,6 +8,8 @@ use sha2::{Digest, Sha256};
 use tokio::sync::watch;
 use url::Url;
 
+pub mod teamai;
+
 use super::{
     content::{validate_manifest_item, ContentLimits},
     types::{AssetKind, Manifest, ManifestItem, TeamError, TeamProfile},
@@ -210,34 +212,7 @@ impl TeamApi {
             .send()
             .await
             .map_err(transport_error)?;
-        if response.status().is_redirection() {
-            return Err(TeamError::Redirect);
-        }
-        match response.status() {
-            StatusCode::UNAUTHORIZED => return Err(TeamError::AuthenticationRequired),
-            StatusCode::FORBIDDEN => return Err(TeamError::AccessDenied),
-            StatusCode::NOT_FOUND => return Err(TeamError::NotFound),
-            StatusCode::CONFLICT => return Err(TeamError::Conflict),
-            StatusCode::PAYLOAD_TOO_LARGE => return Err(TeamError::TooLarge),
-            status if !status.is_success() => return Err(TeamError::Unavailable),
-            _ => {}
-        }
-        if response
-            .content_length()
-            .is_some_and(|size| size > limit as u64)
-        {
-            return Err(TeamError::TooLarge);
-        }
-        let mut body = Vec::new();
-        let mut stream = response.bytes_stream();
-        while let Some(chunk) = stream.next().await {
-            let chunk = chunk.map_err(transport_error)?;
-            if chunk.len() > limit.saturating_sub(body.len()) {
-                return Err(TeamError::TooLarge);
-            }
-            body.extend_from_slice(&chunk);
-        }
-        Ok(body)
+        response_bytes(response, limit).await
     }
 
     async fn json<T: DeserializeOwned>(
@@ -248,17 +223,7 @@ impl TeamApi {
         cancel: &Cancellation,
     ) -> Result<T, TeamError> {
         let bytes = self.bytes(self.endpoint(path)?, key, limit, cancel).await?;
-        let value: serde_json::Value =
-            serde_json::from_slice(&bytes).map_err(|_| TeamError::InvalidResponse)?;
-        if contains_credential(&value, key) {
-            return Err(TeamError::InvalidResponse);
-        }
-        let envelope: Envelope<T> =
-            serde_json::from_value(value).map_err(|_| TeamError::InvalidResponse)?;
-        if envelope.code != 0 {
-            return Err(TeamError::InvalidResponse);
-        }
-        Ok(envelope.data)
+        decode_json(&bytes, key)
     }
 
     pub async fn profile(
@@ -387,6 +352,72 @@ fn transport_error(error: reqwest::Error) -> TeamError {
     } else {
         TeamError::Unavailable
     }
+}
+
+async fn response_bytes(response: reqwest::Response, limit: usize) -> Result<Vec<u8>, TeamError> {
+    if response.status().is_redirection() {
+        return Err(TeamError::Redirect);
+    }
+    match response.status() {
+        StatusCode::BAD_REQUEST => return Err(TeamError::InvalidResponse),
+        StatusCode::UNAUTHORIZED => return Err(TeamError::AuthenticationRequired),
+        StatusCode::FORBIDDEN => return Err(TeamError::AccessDenied),
+        StatusCode::NOT_FOUND => return Err(TeamError::NotFound),
+        StatusCode::CONFLICT => return Err(TeamError::Conflict),
+        StatusCode::PAYLOAD_TOO_LARGE => return Err(TeamError::TooLarge),
+        StatusCode::TOO_MANY_REQUESTS => {
+            let header = response
+                .headers()
+                .get(reqwest::header::RETRY_AFTER)
+                .and_then(|value| value.to_str().ok());
+            let seconds = header
+                .and_then(|value| value.parse::<u64>().ok())
+                .or_else(|| {
+                    header
+                        .and_then(|value| chrono::DateTime::parse_from_rfc2822(value).ok())
+                        .map(|date| {
+                            (date.timestamp() - chrono::Utc::now().timestamp()).max(1) as u64
+                        })
+                })
+                .unwrap_or(60)
+                .clamp(1, 3600);
+            return Err(TeamError::RateLimited {
+                retry_after_seconds: seconds,
+            });
+        }
+        status if !status.is_success() => return Err(TeamError::Unavailable),
+        _ => {}
+    }
+    if response
+        .content_length()
+        .is_some_and(|size| size > limit as u64)
+    {
+        return Err(TeamError::TooLarge);
+    }
+    let mut body = Vec::new();
+    let mut stream = response.bytes_stream();
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(transport_error)?;
+        if chunk.len() > limit.saturating_sub(body.len()) {
+            return Err(TeamError::TooLarge);
+        }
+        body.extend_from_slice(&chunk);
+    }
+    Ok(body)
+}
+
+fn decode_json<T: DeserializeOwned>(bytes: &[u8], key: &str) -> Result<T, TeamError> {
+    let value: serde_json::Value =
+        serde_json::from_slice(bytes).map_err(|_| TeamError::InvalidResponse)?;
+    if contains_credential(&value, key) {
+        return Err(TeamError::InvalidResponse);
+    }
+    let envelope: Envelope<T> =
+        serde_json::from_value(value).map_err(|_| TeamError::InvalidResponse)?;
+    if envelope.code != 0 {
+        return Err(TeamError::InvalidResponse);
+    }
+    Ok(envelope.data)
 }
 
 fn contains_credential(value: &serde_json::Value, key: &str) -> bool {

@@ -1,16 +1,30 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  open as openNative,
+  save as saveNative,
+} from "@tauri-apps/plugin-dialog";
+import { dirname, basename, downloadDir, join } from "@tauri-apps/api/path";
 
 import {
   activateTeamProvider,
   applyTeamProvider,
   cancelTeamOperation,
+  waitForTeamIdle,
   connectTeam,
   disconnectTeam,
   getTeamLocalHistory,
   getTeamStatus,
   previewTeamProvider,
-  previewTeamSync,
+  previewTeamSync as previewLegacyTeamSync,
+  previewTeamAI,
+  applyTeamAI,
+  retryTeamAIAcknowledgements,
+  getTeamAIAcknowledgementStatus,
+  exportTeamAICandidate,
+  type TeamAICandidateExport,
+  type TeamAIPreview,
+  type TeamAIAcknowledgements,
   restoreTeamBackup,
   syncTeam,
   type ProviderPreview,
@@ -39,6 +53,9 @@ type BusyAction =
   | "provider"
   | "restore"
   | "sync"
+  | "cancelling"
+  | "reporting"
+  | "export"
   | null;
 
 function commandError(error: unknown): TeamCommandError {
@@ -54,9 +71,19 @@ function commandError(error: unknown): TeamCommandError {
   };
 }
 
-function readTextFile(file: File): Promise<string> {
+function readTextFile(file: File, signal: AbortSignal): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
+    const abort = () => {
+      reader.abort();
+      reject(new Error("Profile read cancelled"));
+    };
+    if (signal.aborted) {
+      reject(new Error("Profile read cancelled"));
+      return;
+    }
+    signal.addEventListener("abort", abort, { once: true });
+    reader.onloadend = () => signal.removeEventListener("abort", abort);
     reader.onload = () =>
       typeof reader.result === "string"
         ? resolve(reader.result)
@@ -119,9 +146,63 @@ export function useTeamWorkspace(initialApp = "codex") {
     name: string;
     app: string;
   } | null>(null);
-  const [busy, setBusy] = useState<BusyAction>(null);
+  const [operationBusy, setBusy] = useState<BusyAction>(null);
+  const [reportingBusy, setReportingBusyState] = useState(false);
+  const busy = operationBusy ?? (reportingBusy ? "reporting" : null);
   const [error, setError] = useState<TeamCommandError | null>(null);
   const requestRevision = useRef(0);
+  const [candidateExport, setCandidateExport] =
+    useState<TeamAICandidateExport | null>(null);
+  const signedPreviews = useRef(new WeakMap<SyncPlan, TeamAIPreview>());
+  const [ackState, setAckState] = useState<{
+    app: string;
+    connectionId: string;
+    summary: TeamAIAcknowledgements;
+  } | null>(null);
+  const acknowledgements =
+    ackState?.app === assetApp && ackState.connectionId === connection?.id
+      ? ackState.summary
+      : null;
+  const teamaiSync = syncPlan !== null && signedPreviews.current.has(syncPlan);
+  const legacySync =
+    syncPlan !== null &&
+    !teamaiSync &&
+    (assetApp === "codex" || assetApp === "claude");
+
+  async function previewTeamSync(app: string): Promise<SyncPlan> {
+    if (app !== "codex" && app !== "claude") return previewLegacyTeamSync(app);
+    const owner = requestRevision.current;
+    try {
+      const preview = await previewTeamAI(app);
+      if (owner !== requestRevision.current)
+        throw { code: "cancelled", message: "The operation was superseded" };
+      const plan = {
+        ...preview.plan,
+        items: [...preview.plan.items, ...preview.legacy_items].sort(
+          (a, b) => a.asset.asset_id - b.asset.asset_id,
+        ),
+      };
+      signedPreviews.current.set(plan, preview);
+      return plan;
+    } catch (reason) {
+      if (
+        owner !== requestRevision.current ||
+        commandError(reason).code !== "upgrade_required"
+      )
+        throw reason;
+      return previewLegacyTeamSync(app);
+    }
+  }
+  const pendingOperations = useRef(new Set<Promise<void>>());
+  const fileReads = useRef(new Set<AbortController>());
+  const cancelling = useRef(false);
+  const [operationNotice, setOperationNotice] = useState<
+    "stopped" | "cancelFailed" | "recoveryFailed" | null
+  >(null);
+  const setReportingBusy = useCallback((value: boolean) => {
+    setReportingBusyState(value);
+    if (value) setOperationNotice(null);
+  }, []);
 
   const selectedModel = model === NO_MODEL ? null : model;
   const models = connection?.profile.models ?? [];
@@ -133,14 +214,16 @@ export function useTeamWorkspace(initialApp = "codex") {
   useEffect(() => {
     if (!connection || syncPlan) return;
     let active = true;
+    const revision = requestRevision.current;
     setLocalHistory([]);
     setLocalHistoryApp(assetApp);
     void getTeamLocalHistory(assetApp)
       .then((history) => {
-        if (active) setLocalHistory(history);
+        if (active && revision === requestRevision.current)
+          setLocalHistory(history);
       })
       .catch(() => {
-        if (active) setLocalHistory([]);
+        if (active && revision === requestRevision.current) setLocalHistory([]);
       });
     return () => {
       active = false;
@@ -214,7 +297,8 @@ export function useTeamWorkspace(initialApp = "codex") {
     return () => {
       active = false;
       requestRevision.current += 1;
-      void cancelTeamOperation();
+      for (const read of fileReads.current) read.abort();
+      void cancelTeamOperation().catch(() => {});
     };
   }, []);
 
@@ -239,14 +323,16 @@ export function useTeamWorkspace(initialApp = "codex") {
       setLastSyncAt(plan.last_successful_sync);
       setPendingRestoreAsset(null);
     } catch (reason) {
+      if (revision !== requestRevision.current) return;
       setError(commandError(reason));
       try {
-        setConnection(await getTeamStatus());
+        const status = await getTeamStatus();
+        if (revision === requestRevision.current) setConnection(status);
       } catch {
         // Preserve the actionable request error when local status cannot reload.
       }
     } finally {
-      setBusy(null);
+      if (revision === requestRevision.current) setBusy(null);
     }
   };
 
@@ -273,10 +359,13 @@ export function useTeamWorkspace(initialApp = "codex") {
       setLastSyncAt(plan.last_successful_sync);
       setImportedProfileName(null);
     } catch (reason) {
+      if (revision !== requestRevision.current) return;
       setError(commandError(reason));
     } finally {
-      setMemberKey("");
-      setBusy(null);
+      if (revision === requestRevision.current) {
+        setMemberKey("");
+        setBusy(null);
+      }
     }
   };
 
@@ -287,6 +376,9 @@ export function useTeamWorkspace(initialApp = "codex") {
     event.currentTarget.value = "";
     if (!file) return;
     const revision = ++requestRevision.current;
+    for (const read of fileReads.current) read.abort();
+    const read = new AbortController();
+    fileReads.current.add(read);
     setBusy("profile");
     setError(null);
     setImportedProfileName(null);
@@ -294,7 +386,7 @@ export function useTeamWorkspace(initialApp = "codex") {
     setMemberKey("");
     try {
       if (file.size > 1_048_576) throw new Error("Team Profile exceeds 1 MiB");
-      const text = await readTextFile(file);
+      const text = await readTextFile(file, read.signal);
       if (revision !== requestRevision.current) return;
       const value = JSON.parse(text) as Record<string, unknown> | null;
       if (
@@ -322,16 +414,18 @@ export function useTeamWorkspace(initialApp = "codex") {
         message: t("team.errors.invalid_profile_file"),
       });
     } finally {
+      fileReads.current.delete(read);
       if (revision === requestRevision.current) setBusy(null);
     }
   };
 
   const handleDisconnect = async () => {
-    requestRevision.current += 1;
+    const revision = ++requestRevision.current;
     setBusy("disconnect");
     setError(null);
     try {
       await disconnectTeam(removeProviderCredentials);
+      if (revision !== requestRevision.current) return;
       setConnection(null);
       setManifest(null);
       setProviderPreview(null);
@@ -342,15 +436,20 @@ export function useTeamWorkspace(initialApp = "codex") {
       setLastSyncAt(null);
       setShowDisconnect(false);
       setModel(NO_MODEL);
+      setMemberKey("");
+      setGateway("");
+      setImportedProfileName(null);
     } catch (reason) {
+      if (revision !== requestRevision.current) return;
       setError(commandError(reason));
       try {
-        setConnection(await getTeamStatus());
+        const status = await getTeamStatus();
+        if (revision === requestRevision.current) setConnection(status);
       } catch {
         // Keep the sync error visible when local status cannot reload.
       }
     } finally {
-      setBusy(null);
+      if (revision === requestRevision.current) setBusy(null);
     }
   };
 
@@ -413,6 +512,7 @@ export function useTeamWorkspace(initialApp = "codex") {
     setError(null);
     try {
       await activateTeamProvider(requestedApp, providerPreview.decision_token);
+      if (revision !== requestRevision.current) return;
       const preview = await previewTeamProvider(requestedApp, requestedModel);
       if (revision === requestRevision.current) setProviderPreview(preview);
     } catch (reason) {
@@ -442,14 +542,16 @@ export function useTeamWorkspace(initialApp = "codex") {
       setLastSyncAt(plan.last_successful_sync);
       setPendingRestoreAsset(null);
     } catch (reason) {
+      if (revision !== requestRevision.current) return;
       setError(commandError(reason));
       try {
-        setConnection(await getTeamStatus());
+        const status = await getTeamStatus();
+        if (revision === requestRevision.current) setConnection(status);
       } catch {
         // Keep the sync error visible when local status cannot reload.
       }
     } finally {
-      setBusy(null);
+      if (revision === requestRevision.current) setBusy(null);
     }
   };
 
@@ -467,22 +569,147 @@ export function useTeamWorkspace(initialApp = "codex") {
           ? [{ asset_id: assetId, decision_token: item.decision_token }]
           : [];
       });
-      const result = await syncTeam(assetApp, decisions);
+      const review = signedPreviews.current.get(syncPlan);
+      const applied = review
+        ? await applyTeamAI(assetApp, review, decisions)
+        : null;
+      const result = applied
+        ? applied.install
+        : await syncTeam(assetApp, decisions);
       if (revision !== requestRevision.current) return;
+      setAckState(
+        applied
+          ? {
+              app: assetApp,
+              connectionId: result.connection.id,
+              summary: applied.acknowledgements,
+            }
+          : null,
+      );
       setConnection(result.connection);
       setSyncResult(result);
       setLastSyncAt(result.last_successful_sync);
       setSyncPlan(null);
       setOverwriteAssets(new Set());
     } catch (reason) {
+      if (revision !== requestRevision.current) return;
       setError(commandError(reason));
       try {
-        setConnection(await getTeamStatus());
+        const status = await getTeamStatus();
+        if (revision === requestRevision.current) setConnection(status);
       } catch {
         // Keep the sync error visible when local status cannot reload.
       }
     } finally {
-      setBusy(null);
+      if (revision === requestRevision.current) setBusy(null);
+    }
+  };
+
+  const handleRetryAcknowledgements = async () => {
+    if (!connection || (assetApp !== "codex" && assetApp !== "claude")) return;
+    const revision = ++requestRevision.current;
+    const requestedApp = assetApp;
+    const connectionId = connection.id;
+    setBusy("sync");
+    setError(null);
+    try {
+      const summary = await retryTeamAIAcknowledgements(requestedApp);
+      if (revision !== requestRevision.current) return;
+      setAckState({ app: requestedApp, connectionId, summary });
+      try {
+        const status = await getTeamStatus();
+        if (revision === requestRevision.current) setConnection(status);
+      } catch {
+        /* Confirmation succeeded; a local status read must not relabel it as failed. */
+      }
+    } catch (reason) {
+      if (revision === requestRevision.current) setError(commandError(reason));
+    } finally {
+      if (revision === requestRevision.current) setBusy(null);
+    }
+  };
+
+  const refreshAcknowledgements = useCallback(async () => {
+    const connectionId = connection?.id;
+    if (!connectionId || (assetApp !== "codex" && assetApp !== "claude"))
+      return;
+    const revision = requestRevision.current;
+    try {
+      const result = await getTeamAIAcknowledgementStatus(assetApp);
+      if (
+        revision !== requestRevision.current ||
+        result.connection?.id !== connectionId
+      )
+        return;
+      setConnection((current) =>
+        current?.id === result.connection?.id &&
+        current?.status === result.connection?.status &&
+        current?.last_error === result.connection?.last_error &&
+        current?.last_checked_at === result.connection?.last_checked_at
+          ? current
+          : result.connection,
+      );
+      setAckState((current) => {
+        const same =
+          current?.app === assetApp && current.connectionId === connectionId;
+        if (
+          same &&
+          current.summary.waiting === result.status.pending &&
+          current.summary.last_error === result.status.last_error
+        )
+          return current;
+        if (!same && result.status.pending === 0 && !result.status.last_error)
+          return null;
+        return {
+          app: assetApp,
+          connectionId,
+          summary: {
+            waiting: result.status.pending,
+            acknowledged: 0,
+            superseded: 0,
+            last_error: result.status.last_error,
+          },
+        };
+      });
+    } catch {
+      /* A read-only status refresh must not replace a foreground operation's result. */
+    }
+  }, [assetApp, connection?.id]);
+
+  const handleExportCandidate = async (kind: "skill" | "rule") => {
+    const revision = ++requestRevision.current;
+    setBusy("export");
+    setError(null);
+    setCandidateExport(null);
+    try {
+      const selected = await openNative({
+        directory: kind === "skill",
+        multiple: false,
+        ...(kind === "rule"
+          ? { filters: [{ name: "Markdown", extensions: ["md"] }] }
+          : {}),
+      });
+      if (revision !== requestRevision.current || typeof selected !== "string")
+        return;
+      const output = await saveNative({
+        defaultPath: await join(
+          await downloadDir(),
+          "candidate.nexusops-asset.json",
+        ),
+        filters: [
+          { name: "NexusOps asset", extensions: ["nexusops-asset.json"] },
+        ],
+      });
+      if (revision !== requestRevision.current || !output) return;
+      const root = kind === "skill" ? selected : await dirname(selected);
+      const entry = kind === "rule" ? await basename(selected) : null;
+      if (revision !== requestRevision.current) return;
+      const result = await exportTeamAICandidate({ kind, root, entry, output });
+      if (revision === requestRevision.current) setCandidateExport(result);
+    } catch (reason) {
+      if (revision === requestRevision.current) setError(commandError(reason));
+    } finally {
+      if (revision === requestRevision.current) setBusy(null);
     }
   };
 
@@ -493,6 +720,7 @@ export function useTeamWorkspace(initialApp = "codex") {
     let recoveryWarning: TeamCommandError | null = null;
     try {
       const restored = await restoreTeamBackup(restoreApp, assetId);
+      if (revision !== requestRevision.current) return;
       setPendingRestoreAsset(null);
       if (restored.upstream_pending) {
         recoveryWarning = {
@@ -503,13 +731,16 @@ export function useTeamWorkspace(initialApp = "codex") {
         };
       }
     } catch (reason) {
+      if (revision !== requestRevision.current) return;
       setError(commandError(reason));
       setBusy(null);
       return;
     }
 
     try {
-      setLocalHistory(await getTeamLocalHistory(restoreApp));
+      const history = await getTeamLocalHistory(restoreApp);
+      if (revision !== requestRevision.current) return;
+      setLocalHistory(history);
       setLocalHistoryApp(restoreApp);
     } catch {
       // The restore is already committed; keep the prior local list if it cannot reload.
@@ -529,12 +760,13 @@ export function useTeamWorkspace(initialApp = "codex") {
       setLastSyncAt(plan.last_successful_sync);
       setError(recoveryWarning);
     } catch {
+      if (revision !== requestRevision.current) return;
       setError({
         code: "restore_refresh_failed",
         message: t("team.errorActions.restore_refresh_failed"),
       });
     } finally {
-      setBusy(null);
+      if (revision === requestRevision.current) setBusy(null);
     }
   };
 
@@ -547,24 +779,93 @@ export function useTeamWorkspace(initialApp = "codex") {
     });
   };
 
+  function tracked<A extends unknown[]>(
+    operation: (...args: A) => Promise<void>,
+  ) {
+    return (...args: A): Promise<void> => {
+      if (cancelling.current) return Promise.resolve();
+      setOperationNotice(null);
+      const pending = operation(...args);
+      pendingOperations.current.add(pending);
+      void pending
+        .finally(() => pendingOperations.current.delete(pending))
+        .catch(() => {});
+      return pending;
+    };
+  }
+
+  const cancelCurrentOperation = async () => {
+    if (
+      cancelling.current ||
+      busy === null ||
+      busy === "disconnect" ||
+      busy === "reporting"
+    )
+      return;
+    cancelling.current = true;
+    const revision = ++requestRevision.current;
+    const target = assetApp;
+    const pending = [...pendingOperations.current];
+    setBusy("cancelling");
+    setError(null);
+    setOperationNotice(null);
+    setMemberKey("");
+    for (const read of fileReads.current) read.abort();
+    let notice: "stopped" | "cancelFailed" | "recoveryFailed" = "stopped";
+    try {
+      try {
+        await cancelTeamOperation();
+      } catch {
+        notice = "cancelFailed";
+      }
+      // Rust cancellation is a signal, not a rollback. Do not unlock the UI until
+      // every owned call settles, including non-interruptible atomic writes.
+      await Promise.allSettled(pending);
+      if (revision !== requestRevision.current) return;
+      try {
+        await waitForTeamIdle();
+        if (revision !== requestRevision.current) return;
+        const status = await getTeamStatus();
+        const history = status ? await getTeamLocalHistory(target) : [];
+        if (revision !== requestRevision.current) return;
+        setConnection(status);
+        setLocalHistory(history);
+        setLocalHistoryApp(target);
+      } catch {
+        notice = "recoveryFailed";
+      }
+      if (revision !== requestRevision.current) return;
+      setProviderPreview(null);
+      setSyncPlan(null);
+      setSyncResult(null);
+      setOverwriteAssets(new Set());
+      setPendingRestoreAsset(null);
+      setImportedProfileName(null);
+      setOperationNotice(notice);
+    } finally {
+      cancelling.current = false;
+      if (revision === requestRevision.current) setBusy(null);
+    }
+  };
+
   return {
     connection,
     error,
     busy,
-    handleConnect,
-    handleProfileFile,
+    handleConnect: tracked(handleConnect),
+    handleProfileFile: tracked(handleProfileFile),
     importedProfileName,
     gateway,
     setGateway,
     memberKey,
     setMemberKey,
     statusLabel,
-    runRefresh,
+    runRefresh: tracked(runRefresh),
     setShowDisconnect,
     showDisconnect,
     removeProviderCredentials,
     setRemoveProviderCredentials,
-    handleDisconnect,
+    handleDisconnect: tracked(handleDisconnect),
     models,
     lastSuccessfulSync,
     providerApp,
@@ -575,10 +876,10 @@ export function useTeamWorkspace(initialApp = "codex") {
     model,
     setModel,
     providerPreview,
-    handleProviderPreview,
+    handleProviderPreview: tracked(handleProviderPreview),
     selectedModel,
-    handleProviderApply,
-    handleProviderActivate,
+    handleProviderApply: tracked(handleProviderApply),
+    handleProviderActivate: tracked(handleProviderActivate),
     assetApp,
     setAssetApp,
     setSyncPlan,
@@ -589,16 +890,26 @@ export function useTeamWorkspace(initialApp = "codex") {
     setLocalHistory,
     setLocalHistoryApp,
     manifest,
-    handleSyncPreview,
+    handleSyncPreview: tracked(handleSyncPreview),
     syncPlan,
-    handleSync,
+    handleSync: tracked(handleSync),
     pendingRestoreAsset,
-    handleRestore,
+    handleRestore: tracked(handleRestore),
     syncResult,
     overwriteAssets,
     setOverwrite,
     localHistoryApp,
     localHistory,
+    operationNotice,
+    cancelCurrentOperation,
+    setReportingBusy,
+    acknowledgements,
+    teamaiSync,
+    legacySync,
+    handleRetryAcknowledgements: tracked(handleRetryAcknowledgements),
+    refreshAcknowledgements,
+    candidateExport,
+    handleExportCandidate: tracked(handleExportCandidate),
   };
 }
 export type TeamWorkspaceModel = ReturnType<typeof useTeamWorkspace>;

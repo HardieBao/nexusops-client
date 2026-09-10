@@ -1309,7 +1309,22 @@ mod tests {
         #[cfg(unix)]
         std::os::unix::fs::symlink(&enc, sub.join("cycle")).expect("symlink");
         #[cfg(windows)]
-        std::os::windows::fs::symlink_dir(&enc, sub.join("cycle")).expect("symlink");
+        {
+            // A real directory cycle, available to ordinary Windows users.
+            use std::os::windows::process::CommandExt;
+            let result = std::process::Command::new("cmd.exe")
+                .args(["/d", "/c", "mklink", "/J"])
+                .arg(sub.join("cycle"))
+                .arg(&enc)
+                .creation_flags(0x08000000)
+                .output()
+                .expect("create directory junction");
+            assert!(result.status.success(), "junction fixture creation failed");
+            assert_eq!(
+                std::fs::canonicalize(sub.join("cycle")).unwrap(),
+                std::fs::canonicalize(&enc).unwrap()
+            );
+        }
 
         // 也放一个真实的目标文件，确认正常遍历仍工作
         std::fs::write(enc.join("updates.jsonl"), b"{}\n").expect("write real file");
