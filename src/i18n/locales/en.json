@@ -1716,7 +1716,7 @@
   },
   "usage": {
     "title": "Usage Statistics",
-    "subtitle": "View AI model usage and cost statistics",
+    "subtitle": "Model requests and estimated costs recorded on this device, excluding hook events. Organization gateway bills are available in the admin console.",
     "today": "24 Hours",
     "last7days": "7 Days",
     "last30days": "30 Days",

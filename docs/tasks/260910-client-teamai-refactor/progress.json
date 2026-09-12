@@ -135,5 +135,16 @@
     "tray_menu_visibility": "passed",
     "tray_menu_actions": "pending: input not delivered; provider menus unsupported; human verification requested",
     "code_changes": false
+  },
+  "usage_entry_parity_20260912": {
+    "evidence": "evidence/usage-entry-parity-20260912.md",
+    "native_client": "2fa03d89",
+    "all_and_codex_rows": "equal across independent usage and legacy settings entry",
+    "proxy_enabled": false,
+    "refresh_preference": "5000 ms persisted across entries",
+    "locale_copy": "four source captions clarified; new package display pending",
+    "typecheck": "passed",
+    "renderer_build": "passed",
+    "focused_tests": 6
   }
 }

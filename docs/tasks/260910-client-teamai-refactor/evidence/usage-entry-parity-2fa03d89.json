@@ -1,0 +1,54 @@
+{
+  "client_commit": "2fa03d89229c1d2dbb3676a0bdf590567f650659",
+  "fixture": "4 synthetic SQLite model-request records, no mocked IPC",
+  "proxy_enabled": false,
+  "results": {
+    "all": {
+      "new_entry": {
+        "cost": "$0.6000",
+        "hookNotice": true,
+        "requests": "4",
+        "rows": [
+          "09/12 18:46 qa-claude qa-model-b 0 0 $0.0000 0.1s 500 proxy",
+          "09/12 18:46 qa-claude qa-model-b 300 30 $0.3000 0.3s 200 proxy",
+          "09/12 18:46 qa-codex qa-model-a 200 20 $0.2000 0.2s 200 proxy",
+          "09/12 18:46 qa-codex qa-model-a 100 10 $0.1000 0.1s 200 proxy"
+        ],
+        "tokens": "660"
+      },
+      "legacy_entry": {
+        "cost": "$0.6000",
+        "requests": "4",
+        "rows": [
+          "09/12 18:46 qa-claude qa-model-b 0 0 $0.0000 0.1s 500 proxy",
+          "09/12 18:46 qa-claude qa-model-b 300 30 $0.3000 0.3s 200 proxy",
+          "09/12 18:46 qa-codex qa-model-a 200 20 $0.2000 0.2s 200 proxy",
+          "09/12 18:46 qa-codex qa-model-a 100 10 $0.1000 0.1s 200 proxy"
+        ],
+        "tokens": "660"
+      },
+      "equal": true
+    },
+    "codex": {
+      "new_entry": {
+        "cost": "$0.3000",
+        "requests": "2",
+        "rows": [
+          "09/12 18:46 qa-codex qa-model-a 200 20 $0.2000 0.2s 200 proxy",
+          "09/12 18:46 qa-codex qa-model-a 100 10 $0.1000 0.1s 200 proxy"
+        ],
+        "tokens": "330"
+      },
+      "legacy_entry": {
+        "cost": "$0.3000",
+        "requests": "2",
+        "rows": [
+          "09/12 18:46 qa-codex qa-model-a 200 20 $0.2000 0.2s 200 proxy",
+          "09/12 18:46 qa-codex qa-model-a 100 10 $0.1000 0.1s 200 proxy"
+        ],
+        "tokens": "330"
+      },
+      "equal": true
+    }
+  }
+}
