@@ -1,0 +1,19 @@
+{
+  "keyboard": {
+    "tab_focus_visible": true,
+    "ctrl_comma": "settings",
+    "escape": "home",
+    "enter": "providers"
+  },
+  "installer_exit": 0,
+  "runtime_files_verified": 12,
+  "installed_exe_sha256": "e49363c4b4e176a8fb4fb4ef1d99e0699f9c6e3314d177982488bef1646c9e1a",
+  "registry_shortcuts_startup_restored": true,
+  "native_fallback_cases": 10,
+  "client_commit": "2fa03d89229c1d2dbb3676a0bdf590567f650659",
+  "native_fallback_passed": 10,
+  "uninstaller_exit": 0,
+  "uat_authenticated_acceptance": "pending",
+  "isolated_database_preserved": true,
+  "worker_version": "0.22.0"
+}

@@ -1,0 +1,278 @@
+{
+  "client_commit": "2fa03d89229c1d2dbb3676a0bdf590567f650659",
+  "mode": "real EXE process restart per saved view; isolated empty data; no mocked IPC",
+  "cases": [
+    {
+      "hidden_hermes": true,
+      "requested_view": "hermesMemory",
+      "requested_app": "hermes",
+      "expected_view": "providers",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n工具接入\nNexusOps\n不使用项目\n团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "buttons": [
+        "团队供应商",
+        "",
+        "https://www.anthropic.com/claude-code",
+        "启用",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "heading": "工具接入",
+      "mainText": "团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "hermes",
+      "savedView": "providers"
+    },
+    {
+      "hidden_hermes": false,
+      "requested_view": "workspace",
+      "requested_app": "claude",
+      "expected_view": "providers",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n工具接入\nNexusOps\n不使用项目\n团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "buttons": [
+        "团队供应商",
+        "",
+        "https://www.anthropic.com/claude-code",
+        "启用",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "heading": "工具接入",
+      "mainText": "团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "providers"
+    },
+    {
+      "hidden_hermes": false,
+      "requested_view": "openclawEnv",
+      "requested_app": "claude",
+      "expected_view": "providers",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n工具接入\nNexusOps\n不使用项目\n团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "buttons": [
+        "团队供应商",
+        "",
+        "https://www.anthropic.com/claude-code",
+        "启用",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "heading": "工具接入",
+      "mainText": "团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "providers"
+    },
+    {
+      "hidden_hermes": false,
+      "requested_view": "openclawTools",
+      "requested_app": "claude",
+      "expected_view": "providers",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n工具接入\nNexusOps\n不使用项目\n团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "buttons": [
+        "团队供应商",
+        "",
+        "https://www.anthropic.com/claude-code",
+        "启用",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "heading": "工具接入",
+      "mainText": "团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "providers"
+    },
+    {
+      "hidden_hermes": false,
+      "requested_view": "openclawAgents",
+      "requested_app": "claude",
+      "expected_view": "providers",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n工具接入\nNexusOps\n不使用项目\n团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "buttons": [
+        "团队供应商",
+        "",
+        "https://www.anthropic.com/claude-code",
+        "启用",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "heading": "工具接入",
+      "mainText": "团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "providers"
+    },
+    {
+      "hidden_hermes": false,
+      "requested_view": "workspace",
+      "requested_app": "openclaw",
+      "expected_view": "workspace",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\nWorkspace 文件管理\n\n~/.openclaw/workspace/\n\nAGENTS.md\n\nAgent 操作指令和规则\n\nSOUL.md\n\nAgent 人格和沟通风格\n\nUSER.md\n\n用户档案和偏好\n\nIDENTITY.md\n\nAgent 名称和头像\n\nTOOLS.md\n\n本地工具文档\n\nMEMORY.md\n\n长期记忆和决策记录\n\nHEARTBEAT.md\n\n心跳运行清单\n\nBOOTSTRAP.md\n\n首次运行仪式\n\nBOOT.md\n\n网关重启清单\n\n每日记忆文件\n\n浏览管理每日记忆",
+      "buttons": [
+        "AGENTS.mdAgent 操作指令和规则",
+        "SOUL.mdAgent 人格和沟通风格",
+        "USER.md用户档案和偏好",
+        "IDENTITY.mdAgent 名称和头像",
+        "TOOLS.md本地工具文档",
+        "MEMORY.md长期记忆和决策记录",
+        "HEARTBEAT.md心跳运行清单",
+        "BOOTSTRAP.md首次运行仪式",
+        "BOOT.md网关重启清单",
+        "每日记忆文件浏览管理每日记忆"
+      ],
+      "heading": "Workspace 文件管理",
+      "mainText": "~/.openclaw/workspace/\n\nAGENTS.md\n\nAgent 操作指令和规则\n\nSOUL.md\n\nAgent 人格和沟通风格\n\nUSER.md\n\n用户档案和偏好\n\nIDENTITY.md\n\nAgent 名称和头像\n\nTOOLS.md\n\n本地工具文档\n\nMEMORY.md\n\n长期记忆和决策记录\n\nHEARTBEAT.md\n\n心跳运行清单\n\nBOOTSTRAP.md\n\n首次运行仪式\n\nBOOT.md\n\n网关重启清单\n\n每日记忆文件\n\n浏览管理每日记忆",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "openclaw",
+      "savedView": "workspace"
+    },
+    {
+      "hidden_hermes": false,
+      "requested_view": "openclawEnv",
+      "requested_app": "openclaw",
+      "expected_view": "openclawEnv",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n环境变量\n\n管理 openclaw.json 中的环境变量配置（API Key、自定义变量等）\n\n以 JSON 形式编辑整个 env 节点。支持 env.vars、env.shellEnv 等嵌套对象。\n\n1\n{}\n格式化\n保存",
+      "buttons": [
+        "格式化",
+        "保存"
+      ],
+      "heading": "环境变量",
+      "mainText": "管理 openclaw.json 中的环境变量配置（API Key、自定义变量等）\n\n以 JSON 形式编辑整个 env 节点。支持 env.vars、env.shellEnv 等嵌套对象。\n\n1\n{}\n格式化\n保存",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "openclaw",
+      "savedView": "openclawEnv"
+    },
+    {
+      "hidden_hermes": false,
+      "requested_view": "openclawTools",
+      "requested_app": "openclaw",
+      "expected_view": "openclawTools",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n工具权限\n\n管理 openclaw.json 中的工具权限配置（允许/拒绝列表）\n\n权限模式\n未设置\n允许列表\n添加允许\n拒绝列表\n添加拒绝\n保存",
+      "buttons": [
+        "未设置",
+        "添加允许",
+        "添加拒绝",
+        "保存"
+      ],
+      "heading": "工具权限",
+      "mainText": "管理 openclaw.json 中的工具权限配置（允许/拒绝列表）\n\n权限模式\n未设置\n允许列表\n添加允许\n拒绝列表\n添加拒绝\n保存",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "openclaw",
+      "savedView": "openclawTools"
+    },
+    {
+      "hidden_hermes": false,
+      "requested_view": "openclawAgents",
+      "requested_app": "openclaw",
+      "expected_view": "openclawAgents",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\nAgents 配置\n\n管理 openclaw.json 中的 agents.defaults 配置（默认模型、运行参数等）\n\n模型配置\n默认模型\n\n暂无已配置的供应商模型。请先添加 OpenClaw 供应商。\n\n从已配置供应商的模型中选择默认模型\n\n回退模型\n运行参数\n工作区路径\n超时时间（秒）\n上下文 Token 数\n最大并发数\n保存",
+      "buttons": [
+        "保存"
+      ],
+      "heading": "Agents 配置",
+      "mainText": "管理 openclaw.json 中的 agents.defaults 配置（默认模型、运行参数等）\n\n模型配置\n默认模型\n\n暂无已配置的供应商模型。请先添加 OpenClaw 供应商。\n\n从已配置供应商的模型中选择默认模型\n\n回退模型\n运行参数\n工作区路径\n超时时间（秒）\n上下文 Token 数\n最大并发数\n保存",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "openclaw",
+      "savedView": "openclawAgents"
+    },
+    {
+      "hidden_hermes": false,
+      "requested_view": "hermesMemory",
+      "requested_app": "hermes",
+      "expected_view": "hermesMemory",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n记忆管理\nAgent 记忆 (MEMORY.md)\n用户画像 (USER.md)\n在 Hermes Web UI 调整上限\n已启用\n1\n\n\n已用 0 / 2200 字符\n更改将在 Hermes 下次启动或新建会话时生效。\n保存",
+      "buttons": [
+        "Agent 记忆 (MEMORY.md)",
+        "用户画像 (USER.md)",
+        "在 Hermes Web UI 调整上限",
+        "",
+        "保存"
+      ],
+      "heading": "记忆管理",
+      "mainText": "Agent 记忆 (MEMORY.md)\n用户画像 (USER.md)\n在 Hermes Web UI 调整上限\n已启用\n1\n\n\n已用 0 / 2200 字符\n更改将在 Hermes 下次启动或新建会话时生效。\n保存",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "hermes",
+      "savedView": "hermesMemory"
+    }
+  ]
+}

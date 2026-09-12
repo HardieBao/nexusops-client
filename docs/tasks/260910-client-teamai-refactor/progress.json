@@ -90,7 +90,7 @@
     "entitlement": "ready",
     "authenticated_acceptance": "pending"
   },
-  "client_checkpoint": "74eddefe179d425bef73f0d1328ef0d35675164b",
+  "client_checkpoint": "2fa03d89229c1d2dbb3676a0bdf590567f650659",
   "delivery_verification_20260912": {
     "evidence": "evidence/windows-native-and-installer-20260912.md",
     "native_skill_export": "passed",
@@ -114,7 +114,19 @@
     "frontend_full": 1192,
     "typecheck": "passed",
     "renderer_build": "passed",
-    "new_package_native_retest": "pending",
+    "new_package_native_retest": "passed: 10/10 from installed 2fa03d89 EXE",
     "gitnexus": "index refresh FTS failure; App missing; graph result unusable"
+  },
+  "delivery_2fa03d89": {
+    "evidence": "evidence/package-and-native-2fa03d89.md",
+    "manifest": "evidence/package-2fa03d89.json",
+    "installer": "passed",
+    "native_fallback": "10/10 passed",
+    "native_keyboard": "Ctrl+, / Escape / Tab / Enter passed",
+    "worker": "pinned version returned; 12 runtime files matched",
+    "uninstall_and_environment_restore": "passed",
+    "trial_guide": "trial-guide.md",
+    "uat_authenticated_acceptance": "pending",
+    "gitnexus": "repair-fts failed with Invalid UTF-8; graph unavailable"
   }
 }
