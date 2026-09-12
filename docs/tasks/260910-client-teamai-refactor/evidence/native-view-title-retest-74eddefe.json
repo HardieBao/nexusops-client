@@ -1,0 +1,72 @@
+{
+  "client_commit": "74eddefe179d425bef73f0d1328ef0d35675164b",
+  "mode": "real EXE process restart per saved view; isolated empty data; no mocked IPC",
+  "cases": [
+    {
+      "requested_view": "prompts",
+      "requested_app": "claude",
+      "expected_view": "prompts",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\nClaude 提示词管理\n添加提示词\n共 0 个提示词 · 未启用任何提示词\n暂无提示词\n\n点击右上角按钮添加或导入提示词",
+      "buttons": [],
+      "heading": "Claude 提示词管理",
+      "mainText": "共 0 个提示词 · 未启用任何提示词\n暂无提示词\n\n点击右上角按钮添加或导入提示词",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "prompts"
+    },
+    {
+      "requested_view": "skillsDiscovery",
+      "requested_app": "claude",
+      "expected_view": "skillsDiscovery",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\nSkills 管理\n刷新\n仓库管理\n仓库\nskills.sh\n全部仓库\n全部",
+      "buttons": [
+        "仓库",
+        "skills.sh",
+        "全部仓库",
+        "全部"
+      ],
+      "heading": "Skills 管理",
+      "mainText": "仓库\nskills.sh\n全部仓库\n全部",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "skillsDiscovery"
+    },
+    {
+      "requested_view": "mcp",
+      "requested_app": "claude",
+      "expected_view": "mcp",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\nMCP 服务器管理\n导入已有\n添加MCP\n已配置 0 个 MCP 服务器\nClaude:\n0\nCodex:\n0\nGemini:\n0\nGrok Build:\n0\nOpenCode:\n0\nHermes:\n0\n暂无服务器\n\n点击右上角按钮添加第一个 MCP 服务器",
+      "buttons": [
+        "Claude:0",
+        "Codex:0",
+        "Gemini:0",
+        "Grok Build:0",
+        "OpenCode:0",
+        "Hermes:0"
+      ],
+      "heading": "MCP 服务器管理",
+      "mainText": "已配置 0 个 MCP 服务器\nClaude:\n0\nCodex:\n0\nGemini:\n0\nGrok Build:\n0\nOpenCode:\n0\nHermes:\n0\n暂无服务器\n\n点击右上角按钮添加第一个 MCP 服务器",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "mcp"
+    }
+  ]
+}

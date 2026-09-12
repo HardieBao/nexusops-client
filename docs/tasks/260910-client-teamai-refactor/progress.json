@@ -89,5 +89,32 @@
     "evidence": "evidence/uat-deployed-20260911.md",
     "entitlement": "ready",
     "authenticated_acceptance": "pending"
+  },
+  "client_checkpoint": "74eddefe179d425bef73f0d1328ef0d35675164b",
+  "delivery_verification_20260912": {
+    "evidence": "evidence/windows-native-and-installer-20260912.md",
+    "native_skill_export": "passed",
+    "native_rule_export": "passed in preceding 20260911 session; candidate rechecked",
+    "close_api_and_single_instance": "passed",
+    "native_mouse_close": "passed: real Windows titlebar; prior failure targeted internal WebView close",
+    "system_scale_factor_current": 1,
+    "package_manifest": "evidence/package-74eddefe.json",
+    "new_package_installation": "passed: isolated Chinese/space path, bundled runtime calls, uninstall and registry/shortcut restoration",
+    "uat_authenticated_acceptance": "pending",
+    "single_instance_deeplink": "passed: provider confirmation and cancel; other deep-link resources pending",
+    "tray_menu": "pending"
+  },
+  "view_migration_20260912": {
+    "evidence": "evidence/view-migration-and-fallback-20260912.md",
+    "legacy_view_native_restore": 15,
+    "additional_native_fallback_cases": 3,
+    "initial_title_assertions": "15/18; corrected three probe expectations and reran 3/3",
+    "hidden_hermes_native_before": "failed; page did not match fallback tool",
+    "regression_tests": "11 passed after fix; 6 failed before fix",
+    "frontend_full": 1192,
+    "typecheck": "passed",
+    "renderer_build": "passed",
+    "new_package_native_retest": "pending",
+    "gitnexus": "index refresh FTS failure; App missing; graph result unusable"
   }
 }

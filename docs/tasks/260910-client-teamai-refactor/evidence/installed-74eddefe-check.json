@@ -1,0 +1,30 @@
+{
+  "startup_registration_restored": true,
+  "client_commit": "74eddefe179d425bef73f0d1328ef0d35675164b",
+  "runtime_files_verified": 12,
+  "uninstaller_exit": 0,
+  "global_node_required": false,
+  "worker_operations": [
+    "version",
+    "inspect_skill",
+    "convert_rule:codex",
+    "convert_rule:claude-code"
+  ],
+  "uat_authenticated_acceptance": "pending",
+  "isolated_database_preserved": true,
+  "registry_restored": [
+    {
+      "key": "Software\\Classes\\nexusops",
+      "matched": true
+    },
+    {
+      "key": "Software\\nexusops\\NexusOps Client",
+      "matched": true
+    }
+  ],
+  "package_sha256": "aac6cf35b70e1d0ee38b9d46086224e9340f5c241d106cc2dd6bafc0f90bf3e7",
+  "installed_exe_sha256": "53983c14ea80a6349b53935e24709c119d1835bf3ad042132bcb0dec65a9f409",
+  "shortcuts_restored": true,
+  "installer_exit": 0,
+  "manual_fixture_cleanup": "owned install-location registry and _?= uninstaller residue removed after exact ownership checks"
+}

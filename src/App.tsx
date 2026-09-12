@@ -190,8 +190,18 @@ function App() {
     }
   }, [visibleApps, activeApp]);
 
-  // Fallback from sessions view when switching to an app without session support
+  // Keep tool-specific pages aligned with the active, visible app.
   useEffect(() => {
+    if (
+      (currentView === "hermesMemory" && sharedFeatureApp !== "hermes") ||
+      (["workspace", "openclawEnv", "openclawTools", "openclawAgents"].includes(
+        currentView,
+      ) &&
+        sharedFeatureApp !== "openclaw")
+    ) {
+      setCurrentView("providers");
+      return;
+    }
     if (currentView === "mcp" && sharedFeatureApp === "pi") {
       setCurrentView("providers");
       return;

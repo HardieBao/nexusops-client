@@ -1,0 +1,30 @@
+{
+  "client_commit": "74eddefe179d425bef73f0d1328ef0d35675164b",
+  "mode": "real EXE process restart per saved view; isolated empty data; no mocked IPC",
+  "cases": [
+    {
+      "requested_view": "hermesMemory",
+      "requested_app": "hermes",
+      "expected_view": "providers",
+      "passed": false,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n记忆管理\nAgent 记忆 (MEMORY.md)\n用户画像 (USER.md)\n在 Hermes Web UI 调整上限\n已启用\n1\n\n\n已用 0 / 2200 字符\n更改将在 Hermes 下次启动或新建会话时生效。\n保存",
+      "buttons": [
+        "Agent 记忆 (MEMORY.md)",
+        "用户画像 (USER.md)",
+        "在 Hermes Web UI 调整上限",
+        "",
+        "保存"
+      ],
+      "heading": "记忆管理",
+      "mainText": "Agent 记忆 (MEMORY.md)\n用户画像 (USER.md)\n在 Hermes Web UI 调整上限\n已启用\n1\n\n\n已用 0 / 2200 字符\n更改将在 Hermes 下次启动或新建会话时生效。\n保存",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "hermes",
+      "savedView": "hermesMemory"
+    }
+  ]
+}

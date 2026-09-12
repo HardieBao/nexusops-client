@@ -1,0 +1,16 @@
+{
+  "rule": {
+    "name": "native-picker-fixture",
+    "bytes": 470,
+    "candidate_sha256": "cb1f00b6a16ad9291175ec09af46530c8acafd667e42682ddb2b7b48c92cc1f1",
+    "content_hash": "576327f98432281f27c0e9a0f085a19368576d0c127a08934bdb04aa2ad6079e",
+    "payload_verified": false
+  },
+  "skill": {
+    "name": "native-skill-fixture",
+    "bytes": 735,
+    "candidate_sha256": "491ba87ccb9d21908987bfcc287b5414b14cd6cba79feaa1de715ea6fb18bf11",
+    "content_hash": "b7ce4528702036d8711729034cf79d888b68029db41aa676b066e8002e5bd9b9",
+    "payload_verified": true
+  }
+}

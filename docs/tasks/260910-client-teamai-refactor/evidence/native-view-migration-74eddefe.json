@@ -1,0 +1,420 @@
+{
+  "client_commit": "74eddefe179d425bef73f0d1328ef0d35675164b",
+  "mode": "real EXE process restart per saved view; isolated empty data; no mocked IPC",
+  "cases": [
+    {
+      "requested_view": "providers",
+      "requested_app": "claude",
+      "expected_view": "providers",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n工具接入\nNexusOps\n不使用项目\n团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "buttons": [
+        "团队供应商",
+        "",
+        "https://www.anthropic.com/claude-code",
+        "启用",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      "heading": "工具接入",
+      "mainText": "团队供应商\nClaude Official\n不支持路由\nhttps://www.anthropic.com/claude-code\n启用",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "providers"
+    },
+    {
+      "requested_view": "settings",
+      "requested_app": "claude",
+      "expected_view": "settings",
+      "passed": true,
+      "bodyText": "意：跨供应商继续旧会话时，对方后端可能无法解密会话中的 encrypted_content 推理内容，导致继续失败\n\n窗口行为\n\n开机自启\n\n随系统启动自动运行 NexusOps Client\n\n应用到 Claude Code 插件\n\n开启后 VS Code Claude Code 插件的供应商将随本软件切换\n\n跳过 Claude Code 初次安装确认\n\n开启后跳过 Claude Code 初次安装确认\n\n关闭时最小化到托盘\n\n勾选后点击关闭按钮会隐藏到系统托盘，取消则直接退出应用。\n\n首选终端\n\n选择点击终端按钮时使用的终端应用\n\n命令提示符\n\n如果选择的终端不可用，将自动使用系统默认终端",
+      "buttons": [
+        "通用",
+        "路由",
+        "认证",
+        "高级",
+        "使用统计",
+        "关于",
+        "简体中文",
+        "繁體中文",
+        "English",
+        "日本語",
+        "浅色",
+        "深色"
+      ],
+      "heading": "设置",
+      "mainText": "通用\n路由\n认证\n高级\n使用统计\n关于\n界面语言\n\n切换后立即预览界面语言，保存后永久生效。\n\n简体中文\n繁體中文\nEnglish\n日本語\n外观主题\n\n选择应用的外观主题，立即生效。\n\n浅色\n深色\n跟随系统\n主页面显示\n\n选择在主页面显示的应用\n\nClaude Code\nClaude Desktop\nCodex\nGemini\nGrok Build\nOpenCode\nOpenClaw\nHermes\nPi\n\n显示项目切换\n\n在主页面顶部显示项目切换入口\n\nSkills 存储位置\n\n选择 NexusOps Client 存放 Skills 主副本的目录\n\nNexusOps Client\n~/.agents/skills\n\n技能存储在 ~/.nexusops-client/skills/，由 NexusOps Client 统一管理并同步到各应用。\n\nSkills 同步方式\n\n选择 Skills 的文件同步策略\n\n软连接\n文件复制\n\n软连接节省磁盘空间并支持实时同步。注意：Windows 可能需",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "settings"
+    },
+    {
+      "requested_view": "prompts",
+      "requested_app": "claude",
+      "expected_view": "prompts",
+      "passed": false,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\nClaude 提示词管理\n添加提示词\n共 0 个提示词 · 未启用任何提示词\n暂无提示词\n\n点击右上角按钮添加或导入提示词",
+      "buttons": [],
+      "heading": "Claude 提示词管理",
+      "mainText": "共 0 个提示词 · 未启用任何提示词\n暂无提示词\n\n点击右上角按钮添加或导入提示词",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "prompts"
+    },
+    {
+      "requested_view": "skills",
+      "requested_app": "claude",
+      "expected_view": "skills",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\nSkills 管理\n检查更新\n从备份中恢复\n从 ZIP 安装\n导入已有\n发现技能\n已安装\nClaude:\n0\nCodex:\n0\nGemini:\n0\nGrok Build:\n0\nOpenCode:\n0\nHermes:\n0\n全部更新 (0)\n暂无已安装的技能\n\n从仓库发现并安装技能，或导入已有的技能",
+      "buttons": [
+        "Claude:0",
+        "Codex:0",
+        "Gemini:0",
+        "Grok Build:0",
+        "OpenCode:0",
+        "Hermes:0",
+        "全部更新 (0)"
+      ],
+      "heading": "Skills 管理",
+      "mainText": "已安装\nClaude:\n0\nCodex:\n0\nGemini:\n0\nGrok Build:\n0\nOpenCode:\n0\nHermes:\n0\n全部更新 (0)\n暂无已安装的技能\n\n从仓库发现并安装技能，或导入已有的技能",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "skills"
+    },
+    {
+      "requested_view": "skillsDiscovery",
+      "requested_app": "claude",
+      "expected_view": "skillsDiscovery",
+      "passed": false,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\nSkills 管理\n刷新\n仓库管理\n仓库\nskills.sh\n全部仓库\n全部",
+      "buttons": [
+        "仓库",
+        "skills.sh",
+        "全部仓库",
+        "全部"
+      ],
+      "heading": "Skills 管理",
+      "mainText": "仓库\nskills.sh\n全部仓库\n全部",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "skillsDiscovery"
+    },
+    {
+      "requested_view": "mcp",
+      "requested_app": "claude",
+      "expected_view": "mcp",
+      "passed": false,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\nMCP 服务器管理\n导入已有\n添加MCP\n已配置 0 个 MCP 服务器\nClaude:\n0\nCodex:\n0\nGemini:\n0\nGrok Build:\n0\nOpenCode:\n0\nHermes:\n0\n暂无服务器\n\n点击右上角按钮添加第一个 MCP 服务器",
+      "buttons": [
+        "Claude:0",
+        "Codex:0",
+        "Gemini:0",
+        "Grok Build:0",
+        "OpenCode:0",
+        "Hermes:0"
+      ],
+      "heading": "MCP 服务器管理",
+      "mainText": "已配置 0 个 MCP 服务器\nClaude:\n0\nCodex:\n0\nGemini:\n0\nGrok Build:\n0\nOpenCode:\n0\nHermes:\n0\n暂无服务器\n\n点击右上角按钮添加第一个 MCP 服务器",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "mcp"
+    },
+    {
+      "requested_view": "agents",
+      "requested_app": "claude",
+      "expected_view": "agents",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n智能体\nComing Soon\n\nThe Agents management feature is currently under development. Stay tuned for powerful autonomous capabilities.",
+      "buttons": [],
+      "heading": "智能体",
+      "mainText": "Coming Soon\n\nThe Agents management feature is currently under development. Stay tuned for powerful autonomous capabilities.",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "agents"
+    },
+    {
+      "requested_view": "universal",
+      "requested_app": "claude",
+      "expected_view": "universal",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n统一供应商\n统一供应商\n0\n\n统一供应商可以同时管理 Claude、Codex 和 Gemini 的配置。修改后会自动同步到所有启用的应用。\n\n还没有统一供应商\n\n点击下方「添加统一供应商」按钮创建一个",
+      "buttons": [],
+      "heading": "统一供应商",
+      "mainText": "统一供应商\n0\n\n统一供应商可以同时管理 Claude、Codex 和 Gemini 的配置。修改后会自动同步到所有启用的应用。\n\n还没有统一供应商\n\n点击下方「添加统一供应商」按钮创建一个",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "universal"
+    },
+    {
+      "requested_view": "sessions",
+      "requested_app": "codex",
+      "expected_view": "sessions",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n会话管理\n会话列表\n0\n查看方式\n供应商筛选\n\n未发现会话\n\n请选择会话查看详情",
+      "buttons": [
+        "查看方式",
+        "",
+        "供应商筛选OpenAI",
+        ""
+      ],
+      "heading": "会话管理",
+      "mainText": "会话列表\n0\n查看方式\n供应商筛选\n\n未发现会话\n\n请选择会话查看详情",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "codex",
+      "savedView": "sessions"
+    },
+    {
+      "requested_view": "workspace",
+      "requested_app": "openclaw",
+      "expected_view": "workspace",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\nWorkspace 文件管理\n\n~/.openclaw/workspace/\n\nAGENTS.md\n\nAgent 操作指令和规则\n\nSOUL.md\n\nAgent 人格和沟通风格\n\nUSER.md\n\n用户档案和偏好\n\nIDENTITY.md\n\nAgent 名称和头像\n\nTOOLS.md\n\n本地工具文档\n\nMEMORY.md\n\n长期记忆和决策记录\n\nHEARTBEAT.md\n\n心跳运行清单\n\nBOOTSTRAP.md\n\n首次运行仪式\n\nBOOT.md\n\n网关重启清单\n\n每日记忆文件\n\n浏览管理每日记忆",
+      "buttons": [
+        "AGENTS.mdAgent 操作指令和规则",
+        "SOUL.mdAgent 人格和沟通风格",
+        "USER.md用户档案和偏好",
+        "IDENTITY.mdAgent 名称和头像",
+        "TOOLS.md本地工具文档",
+        "MEMORY.md长期记忆和决策记录",
+        "HEARTBEAT.md心跳运行清单",
+        "BOOTSTRAP.md首次运行仪式",
+        "BOOT.md网关重启清单",
+        "每日记忆文件浏览管理每日记忆"
+      ],
+      "heading": "Workspace 文件管理",
+      "mainText": "~/.openclaw/workspace/\n\nAGENTS.md\n\nAgent 操作指令和规则\n\nSOUL.md\n\nAgent 人格和沟通风格\n\nUSER.md\n\n用户档案和偏好\n\nIDENTITY.md\n\nAgent 名称和头像\n\nTOOLS.md\n\n本地工具文档\n\nMEMORY.md\n\n长期记忆和决策记录\n\nHEARTBEAT.md\n\n心跳运行清单\n\nBOOTSTRAP.md\n\n首次运行仪式\n\nBOOT.md\n\n网关重启清单\n\n每日记忆文件\n\n浏览管理每日记忆",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "openclaw",
+      "savedView": "workspace"
+    },
+    {
+      "requested_view": "openclawEnv",
+      "requested_app": "openclaw",
+      "expected_view": "openclawEnv",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n环境变量\n\n管理 openclaw.json 中的环境变量配置（API Key、自定义变量等）\n\n以 JSON 形式编辑整个 env 节点。支持 env.vars、env.shellEnv 等嵌套对象。\n\n1\n{}\n格式化\n保存",
+      "buttons": [
+        "格式化",
+        "保存"
+      ],
+      "heading": "环境变量",
+      "mainText": "管理 openclaw.json 中的环境变量配置（API Key、自定义变量等）\n\n以 JSON 形式编辑整个 env 节点。支持 env.vars、env.shellEnv 等嵌套对象。\n\n1\n{}\n格式化\n保存",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "openclaw",
+      "savedView": "openclawEnv"
+    },
+    {
+      "requested_view": "openclawTools",
+      "requested_app": "openclaw",
+      "expected_view": "openclawTools",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n工具权限\n\n管理 openclaw.json 中的工具权限配置（允许/拒绝列表）\n\n权限模式\n未设置\n允许列表\n添加允许\n拒绝列表\n添加拒绝\n保存",
+      "buttons": [
+        "未设置",
+        "添加允许",
+        "添加拒绝",
+        "保存"
+      ],
+      "heading": "工具权限",
+      "mainText": "管理 openclaw.json 中的工具权限配置（允许/拒绝列表）\n\n权限模式\n未设置\n允许列表\n添加允许\n拒绝列表\n添加拒绝\n保存",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "openclaw",
+      "savedView": "openclawTools"
+    },
+    {
+      "requested_view": "openclawAgents",
+      "requested_app": "openclaw",
+      "expected_view": "openclawAgents",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\nAgents 配置\n\n管理 openclaw.json 中的 agents.defaults 配置（默认模型、运行参数等）\n\n模型配置\n默认模型\n\n暂无已配置的供应商模型。请先添加 OpenClaw 供应商。\n\n从已配置供应商的模型中选择默认模型\n\n回退模型\n运行参数\n工作区路径\n超时时间（秒）\n上下文 Token 数\n最大并发数\n保存",
+      "buttons": [
+        "保存"
+      ],
+      "heading": "Agents 配置",
+      "mainText": "管理 openclaw.json 中的 agents.defaults 配置（默认模型、运行参数等）\n\n模型配置\n默认模型\n\n暂无已配置的供应商模型。请先添加 OpenClaw 供应商。\n\n从已配置供应商的模型中选择默认模型\n\n回退模型\n运行参数\n工作区路径\n超时时间（秒）\n上下文 Token 数\n最大并发数\n保存",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "openclaw",
+      "savedView": "openclawAgents"
+    },
+    {
+      "requested_view": "hermesMemory",
+      "requested_app": "hermes",
+      "expected_view": "hermesMemory",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n记忆管理\nAgent 记忆 (MEMORY.md)\n用户画像 (USER.md)\n在 Hermes Web UI 调整上限\n已启用\n1\n\n\n已用 0 / 2200 字符\n更改将在 Hermes 下次启动或新建会话时生效。\n保存",
+      "buttons": [
+        "Agent 记忆 (MEMORY.md)",
+        "用户画像 (USER.md)",
+        "在 Hermes Web UI 调整上限",
+        "",
+        "保存"
+      ],
+      "heading": "记忆管理",
+      "mainText": "Agent 记忆 (MEMORY.md)\n用户画像 (USER.md)\n在 Hermes Web UI 调整上限\n已启用\n1\n\n\n已用 0 / 2200 字符\n更改将在 Hermes 下次启动或新建会话时生效。\n保存",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "hermes",
+      "savedView": "hermesMemory"
+    },
+    {
+      "requested_view": "team",
+      "requested_app": "codex",
+      "expected_view": "team",
+      "passed": true,
+      "bodyText": "exusOps 团队控制平面\n连接团队配置与已发布资产\n\n使用管理员发放的网关地址和成员 Key 验证组织身份。连接后可预览供应商变更，并只同步你当前有权访问的 stable 资产。\n\n每次远端访问都重新校验成员和工作区范围。\n导入供应商与设为当前供应商是两个独立动作。\n本地修改不会在未确认时被远端版本覆盖。\n连接一个工作区\n\n首版同时只保持一个团队连接\n\nTeam Profile 文件\n\n可选择控制台导出的 JSON；读取后仍需点击下方按钮验证，不会自动连接。\n\nGateway 地址\n成员 Key\n\nKey 只用于本机认证，并保存到操作系统凭据存储；Team 数据库不保存明文。\n\n验证并连接",
+      "buttons": [
+        "验证并连接"
+      ],
+      "heading": "组织与上报",
+      "mainText": "NexusOps 团队控制平面\n连接团队配置与已发布资产\n\n使用管理员发放的网关地址和成员 Key 验证组织身份。连接后可预览供应商变更，并只同步你当前有权访问的 stable 资产。\n\n每次远端访问都重新校验成员和工作区范围。\n导入供应商与设为当前供应商是两个独立动作。\n本地修改不会在未确认时被远端版本覆盖。\n连接一个工作区\n\n首版同时只保持一个团队连接\n\nTeam Profile 文件\n\n可选择控制台导出的 JSON；读取后仍需点击下方按钮验证，不会自动连接。\n\nGateway 地址\n成员 Key\n\nKey 只用于本机认证，并保存到操作系统凭据存储；Team 数据库不保存明文。\n\n验证并连接",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "codex",
+      "savedView": "team"
+    },
+    {
+      "requested_view": "bad-saved-value",
+      "requested_app": "bad-app",
+      "expected_view": "home",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n工作台\n你的 AI 工作台\n\n连接开发工具，查看团队资产，保留对本机配置的控制。\n\n配置工具\n组织连接\n\n连接组织或导入本人的 Team Profile。连接不会自动切换供应商或启用统计上报。\n\n连接组织\n当前工具配置\n\nClaude\n\n尚未选择供应商\n\n这里展示已保存配置，不代表实时连接检测结果。\n\n配置工具\n资产库\n\n团队发布与个人资产分别保留来源和所有权，同步前可以预览变更。\n\n打开资产库",
+      "buttons": [
+        "配置工具",
+        "连接组织",
+        "配置工具",
+        "打开资产库"
+      ],
+      "heading": "工作台",
+      "mainText": "你的 AI 工作台\n\n连接开发工具，查看团队资产，保留对本机配置的控制。\n\n配置工具\n组织连接\n\n连接组织或导入本人的 Team Profile。连接不会自动切换供应商或启用统计上报。\n\n连接组织\n当前工具配置\n\nClaude\n\n尚未选择供应商\n\n这里展示已保存配置，不代表实时连接检测结果。\n\n配置工具\n资产库\n\n团队发布与个人资产分别保留来源和所有权，同步前可以预览变更。\n\n打开资产库",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "bad-app",
+      "savedView": "home"
+    },
+    {
+      "requested_view": null,
+      "requested_app": "claude",
+      "expected_view": "home",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n工作台\n你的 AI 工作台\n\n连接开发工具，查看团队资产，保留对本机配置的控制。\n\n配置工具\n组织连接\n\n连接组织或导入本人的 Team Profile。连接不会自动切换供应商或启用统计上报。\n\n连接组织\n当前工具配置\n\nClaude\n\n尚未选择供应商\n\n这里展示已保存配置，不代表实时连接检测结果。\n\n配置工具\n资产库\n\n团队发布与个人资产分别保留来源和所有权，同步前可以预览变更。\n\n打开资产库",
+      "buttons": [
+        "配置工具",
+        "连接组织",
+        "配置工具",
+        "打开资产库"
+      ],
+      "heading": "工作台",
+      "mainText": "你的 AI 工作台\n\n连接开发工具，查看团队资产，保留对本机配置的控制。\n\n配置工具\n组织连接\n\n连接组织或导入本人的 Team Profile。连接不会自动切换供应商或启用统计上报。\n\n连接组织\n当前工具配置\n\nClaude\n\n尚未选择供应商\n\n这里展示已保存配置，不代表实时连接检测结果。\n\n配置工具\n资产库\n\n团队发布与个人资产分别保留来源和所有权，同步前可以预览变更。\n\n打开资产库",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "claude",
+      "savedView": "home"
+    },
+    {
+      "requested_view": "mcp",
+      "requested_app": "pi",
+      "expected_view": "providers",
+      "passed": true,
+      "bodyText": "NexusOps\n工作台\n工具接入\n资产库\n使用记录\n高级工具\n组织与上报\n设置\n工具接入\nNexusOps\n团队供应商\n还没有添加 API Key 供应商\n\n点击右上角 +，从预设或自定义配置添加供应商。",
+      "buttons": [
+        "团队供应商"
+      ],
+      "heading": "工具接入",
+      "mainText": "团队供应商\n还没有添加 API Key 供应商\n\n点击右上角 +，从预设或自定义配置添加供应商。",
+      "navigation": [
+        "工作台",
+        "工具接入",
+        "资产库",
+        "使用记录"
+      ],
+      "savedApp": "pi",
+      "savedView": "providers"
+    }
+  ]
+}

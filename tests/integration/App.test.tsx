@@ -4,11 +4,13 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { http, HttpResponse } from "msw";
 import { providersApi } from "@/lib/api/providers";
+import { DEFAULT_VISIBLE_APPS } from "@/config/appConfig";
 import {
   resetProviderState,
   setCurrentProviderId,
   setLiveProviderIds,
   setProviders,
+  setSettings,
 } from "../msw/state";
 import { emitTauriEvent } from "../msw/tauriMocks";
 import { server } from "../msw/server";
@@ -248,6 +250,50 @@ describe("App integration with MSW", () => {
     );
     expect(screen.queryByText("team.connect.heading")).not.toBeInTheDocument();
   }, 15_000);
+
+  it.each([
+    "workspace",
+    "openclawEnv",
+    "openclawTools",
+    "openclawAgents",
+    "hermesMemory",
+  ])("falls back from saved %s when its tool is not active", async (view) => {
+    localStorage.setItem("nexusops-client-last-view", view);
+    localStorage.setItem("nexusops-client-last-app", "claude");
+    const { default: App } = await import("@/App");
+    renderApp(App);
+    expect(await screen.findByTestId("provider-list")).toBeInTheDocument();
+    expect(localStorage.getItem("nexusops-client-last-view")).toBe("providers");
+  });
+
+  it("leaves a saved Hermes page when Hermes is hidden", async () => {
+    setSettings({ visibleApps: { ...DEFAULT_VISIBLE_APPS, hermes: false } });
+    localStorage.setItem("nexusops-client-last-view", "hermesMemory");
+    localStorage.setItem("nexusops-client-last-app", "hermes");
+    const { default: App } = await import("@/App");
+    renderApp(App);
+    expect(await screen.findByTestId("provider-list")).toBeInTheDocument();
+    expect(screen.getByTestId("app-switcher")).toHaveTextContent("claude");
+    expect(localStorage.getItem("nexusops-client-last-view")).toBe("providers");
+  });
+
+  it.each([
+    ["workspace", "openclaw", "workspace.title"],
+    ["openclawEnv", "openclaw", "openclaw.env.title"],
+    ["openclawTools", "openclaw", "openclaw.tools.title"],
+    ["openclawAgents", "openclaw", "openclaw.agents.title"],
+    ["hermesMemory", "hermes", "hermes.memory.title"],
+  ])("preserves saved %s for its supported tool", async (view, app, title) => {
+    localStorage.setItem("nexusops-client-last-view", view);
+    localStorage.setItem("nexusops-client-last-app", app);
+    const { default: App } = await import("@/App");
+    renderApp(App);
+    expect(
+      await screen.findByRole("heading", { name: title, level: 1 }),
+    ).toBeInTheDocument();
+    expect(localStorage.getItem("nexusops-client-last-view")).toBe(view);
+    expect(screen.queryByTestId("provider-list")).not.toBeInTheDocument();
+  });
 
   it("covers basic provider flows via real hooks", async () => {
     const { default: App } = await import("@/App");
