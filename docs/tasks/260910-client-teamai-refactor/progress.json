@@ -128,5 +128,12 @@
     "trial_guide": "trial-guide.md",
     "uat_authenticated_acceptance": "pending",
     "gitnexus": "repair-fts failed with Invalid UTF-8; graph unavailable"
+  },
+  "native_interaction_20260912": {
+    "evidence": "evidence/prompt-and-tray-20260912.md",
+    "claude_prompt_lifecycle": "passed: create/cancel/save/enable/edit/restart/disable/delete with real files and database",
+    "tray_menu_visibility": "passed",
+    "tray_menu_actions": "pending: input not delivered; provider menus unsupported; human verification requested",
+    "code_changes": false
   }
 }

@@ -2,6 +2,8 @@
 
 更新日期：2026-09-12。当前为实施中，不是最终完成报告。
 
+原生交互补验：[Claude 提示词与托盘观察](evidence/prompt-and-tray-20260912.md)。提示词新建、取消、保存、启用、编辑、重启、禁用和删除均有实际文件 / 数据库结果；托盘图标与菜单可见，但菜单动作受自动化接口限制，已请求人工验证，尚未填为通过。
+
 最新交付：[2fa03d89 Windows 包与原生回归](evidence/package-and-native-2fa03d89.md)，以及 [用户试用说明](trial-guide.md)。新包实际安装、10/10 原生页面回退 / 保留、内置 worker、快捷键与正常卸载通过。原生缺陷已完成新包复测，1192 项前端检查见 [保存页面迁移与隐藏工具回退](evidence/view-migration-and-fallback-20260912.md)。完整旧功能交互、托盘和 UAT 已认证场景尚未全部验收。
 
 最新交付检查点：[Windows 标题栏与安装复测](evidence/windows-native-and-installer-20260912.md)。74eddefe 已实际安装、从安装目录调用内置 worker 并卸载，环境恢复核对通过。真实 Windows 标题栏关闭 / 单实例唤回通过；先前白屏确认为误选 WebView 内部关闭控件。深链确认与取消局部通过，托盘菜单仍待验收。[原生导出记录](evidence/native-delivery-20260912.md)保留早先观察。UAT 已部署的证据见 [部署记录](evidence/uat-deployed-20260911.md)，已认证完整验收仍待授权测试身份。下方较早检查点的数量和未部署说明仅代表当时状态。

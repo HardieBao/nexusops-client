@@ -1,0 +1,31 @@
+{
+  "client_commit": "2fa03d89229c1d2dbb3676a0bdf590567f650659",
+  "date": "2026-09-12",
+  "mode": "actual release EXE, isolated home, real IPC and files",
+  "prompt": {
+    "cancel_new_draft_count": 0,
+    "save_without_enable_count": 1,
+    "file_exists_before_enable": false,
+    "navigation_disabled_during_edit": true,
+    "enabled_v1_sha256": "fcf2ab587eedfd8d27d2885cc83f587af56b9157bc1690bdfff0c89293f9bac3",
+    "cancel_edit_preserved_hash": true,
+    "keyboard_replaced_v2_sha256": "3af02e51987bb149431ed85d5fe70540a2d265337f396123d661e5a00ab7615b",
+    "exact_v2_bytes": 21,
+    "restart_count": 1,
+    "restart_enabled": true,
+    "restart_content": "NEXUSOPS_QA_PROMPT_V2",
+    "disable_file_bytes": 0,
+    "cancel_delete_count": 1,
+    "confirm_delete_count": 0
+  },
+  "probe_correction": "CodeMirror fill appended to existing contents; full select/backspace/type verified before final save",
+  "tray": {
+    "icon_and_menu_visible": true,
+    "menu_actions_verified": false,
+    "menu_action_log_observed": false,
+    "orca_provider_version": "1.0.0",
+    "menus_supported": false,
+    "human_verification_requested": true
+  },
+  "normal_exit": true
+}
