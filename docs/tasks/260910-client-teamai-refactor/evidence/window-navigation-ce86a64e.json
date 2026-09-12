@@ -1,0 +1,65 @@
+{
+  "client_commit": "ce86a64e55f39011b823e9b8ad2a5c45bfc0d39c",
+  "actual_titlebar_maximize": true,
+  "actual_titlebar_restore": true,
+  "drag_before": {
+    "x": 780,
+    "y": 233
+  },
+  "drag_after": {
+    "x": 820,
+    "y": 233
+  },
+  "actual_titlebar_minimize": true,
+  "restored_minimized_state": false,
+  "probe_limitations": [
+    "Text-only capture lacked click geometry",
+    "Maximized capture included hidden auxiliary-window images; explicit main screenshot was required"
+  ],
+  "restart_after_gui_tool_switch": {
+    "app": "codex",
+    "heading": "使用记录",
+    "navigation": [
+      "工作台",
+      "工具接入",
+      "资产库",
+      "使用记录",
+      "统一供应商",
+      "会话管理",
+      "MCP 管理",
+      "组织与上报",
+      "设置"
+    ],
+    "proxy": {
+      "active_connections": 0,
+      "active_targets": [],
+      "address": "",
+      "current_provider": null,
+      "current_provider_id": null,
+      "failed_requests": 0,
+      "failover_count": 0,
+      "last_error": null,
+      "last_request_at": null,
+      "port": 0,
+      "running": false,
+      "success_rate": 0,
+      "success_requests": 0,
+      "total_requests": 0,
+      "uptime_seconds": 0
+    },
+    "summary": {
+      "cacheHitRate": 0,
+      "realTotalTokens": 660,
+      "successRate": 75,
+      "totalCacheCreationTokens": 0,
+      "totalCacheReadTokens": 0,
+      "totalCost": "0.600000",
+      "totalInputTokens": 600,
+      "totalOutputTokens": 60,
+      "totalRequests": 4
+    },
+    "view": "usage"
+  },
+  "native_titlebar_close_evidence": "windows-native-and-installer-20260912.md",
+  "keyboard_evidence": "package-and-native-2fa03d89.md"
+}

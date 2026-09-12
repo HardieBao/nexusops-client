@@ -1,16 +1,16 @@
 {
   "objective": "按照 task.md 执行，完成 CLIENT-TEAMAI 的 T00—T23、M1—M5 与 S01—S30",
-  "status": "in_progress",
+  "status": "blocked",
   "client_branch": "codex/client-teamai-refactor",
   "client_baseline": "f811e352fe3904214a2b2305baff81964a416c56",
   "server_baseline": "9a3022a02dbe1cbbe6d6823e04d18c14a9b831e6",
   "completed_tasks": [
     "T00",
     "T01",
-    "T02"
+    "T02",
+    "T03"
   ],
   "active_tasks": [
-    "T03",
     "T04",
     "T11",
     "T12",
@@ -160,5 +160,19 @@
     "uat_authenticated_acceptance": "pending",
     "tray_menu_actions": "pending human verification",
     "fresh_windows_user_or_vm": "pending"
+  },
+  "external_acceptance_block": {
+    "evidence": "remaining-acceptance.md",
+    "revalidated_on": "2026-09-12",
+    "uat_revision": "23a5657416db57938b78cf2c86a4533153a8220e",
+    "unauthenticated_projects_status": 401,
+    "missing": [
+      "authorized UAT administrator/member test sessions or credential file path",
+      "tray open/quit manual result",
+      "clean Windows user or VM acceptance environment/result"
+    ],
+    "same_uat_identity_block_observed_across_goal_turns": "at least 3 consecutive continuations",
+    "build_or_test_still_running": false,
+    "full_objective_complete": false
   }
 }

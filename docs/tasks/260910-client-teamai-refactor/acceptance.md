@@ -1,6 +1,6 @@
 # CLIENT-TEAMAI 验收进度
 
-更新日期：2026-09-12。当前为实施中，不是最终完成报告。
+更新日期：2026-09-12。当前为部分完成、外部验收条件阻塞，不是最终完成报告。完整剩余任务和恢复条件见 [remaining-acceptance.md](remaining-acceptance.md)。
 
 当前试用包：[ce86a64e 安装、语言与性能验证](evidence/package-and-native-ce86a64e.md)。实际安装 / 卸载和资源校验通过，四语言两组视口 8/8，通过最终源码 1192 项测试；各 5 次同机基线 / 候选性能未超过 20% 回归阈值。更早检查点保留历史，试用链接以 [试用说明](trial-guide.md) 为准。
 
@@ -19,7 +19,7 @@
 | T00 | 完成 | baseline.md：两个仓库基线、工具版本、成功重建客户端索引、前端 1105 测试 / typecheck、Rust Team 55 通过 / 4 跳过、Gateway 4 包检查和实际 UAT health |
 | T01 | 完成 | feature-mapping.md：15 类旧 View、9 类工具上下文、快捷键 / 原生入口 / 管理阻塞都有迁移目标；实际回归留给 T10 |
 | T02 | 完成 | contracts.md + contract-examples.json：v1 边界、字段、方法、上限、scope / 项目映射、候选与 ACK、状态阈值、隐私与正反样例明确 |
-| T03 | 实施中 | 新 shell、导航、标题 / 操作与页面出口均已拆出；最新完整前端 1172 项测试通过。原生窗口 / 完整入口场景仍待后续验收 |
+| T03 | 完成 | 固定导航、15 类保存值和回退、真实标题栏 / 拖动 / 快捷键，以及代理关闭、切换 Codex 后重启读取历史均有证据；详见 remaining-acceptance.md。T10 托盘门槛独立保留 |
 | T04 | 实施中 | Team 区块共享 controller，取消收尾、旧响应隔离和上报互锁已加入测试及界面证据；完整身份切换 / 原生故障场景仍需补齐 |
 | T11—T12 | 实施中 | 固定模块、许可与 x64 运行时准备、Rust worker / Tauri 命令已实现；9 项 worker 测试、5 项运行时测试、5 项原生 worker 测试通过。完整安装包、前端调用与资源发布闭环仍未验收 |
 | T14 | 实施中 | 五个接口与 transport 已接入原生 Skill 同步 / 补 ACK，clippy 已恢复通过；实际 Go HTTP + 数据库 + 客户端贯通及 UAT 联调仍需完成 |
