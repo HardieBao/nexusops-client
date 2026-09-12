@@ -90,7 +90,7 @@
     "entitlement": "ready",
     "authenticated_acceptance": "pending"
   },
-  "client_checkpoint": "2fa03d89229c1d2dbb3676a0bdf590567f650659",
+  "client_checkpoint": "ce86a64e55f39011b823e9b8ad2a5c45bfc0d39c",
   "delivery_verification_20260912": {
     "evidence": "evidence/windows-native-and-installer-20260912.md",
     "native_skill_export": "passed",
@@ -142,9 +142,23 @@
     "all_and_codex_rows": "equal across independent usage and legacy settings entry",
     "proxy_enabled": false,
     "refresh_preference": "5000 ms persisted across entries",
-    "locale_copy": "four source captions clarified; new package display pending",
+    "locale_copy": "passed in installed ce86a64e: four languages, 8 viewport checks",
     "typecheck": "passed",
     "renderer_build": "passed",
     "focused_tests": 6
+  },
+  "delivery_ce86a64e": {
+    "evidence": "evidence/package-and-native-ce86a64e.md",
+    "manifest": "evidence/package-ce86a64e.json",
+    "installation_and_cleanup": "passed",
+    "runtime_files": 12,
+    "locale_checks": "8/8 passed",
+    "frontend_full": 1192,
+    "performance_samples": 10,
+    "ready_ratio": 1.002306007148622,
+    "working_set_ratio": 0.9824187432796967,
+    "uat_authenticated_acceptance": "pending",
+    "tray_menu_actions": "pending human verification",
+    "fresh_windows_user_or_vm": "pending"
   }
 }

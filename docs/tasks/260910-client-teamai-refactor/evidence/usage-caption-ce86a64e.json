@@ -1,0 +1,150 @@
+{
+  "client_commit": "ce86a64e55f39011b823e9b8ad2a5c45bfc0d39c",
+  "mode": "installed EXE; real IPC; per-language process restart; CDP viewport emulation, not OS resize",
+  "cases": [
+    {
+      "language": "zh",
+      "expected_viewport": [
+        1280,
+        800
+      ],
+      "caption": "当前设备的模型请求与费用估算，不包含 Hook 事件。组织网关账单请以管理员后台为准。",
+      "captionHeight": 40,
+      "captionScrollWidth": 450,
+      "captionWidth": 450,
+      "documentWidth": 1280,
+      "proxyNotice": true,
+      "viewport": [
+        1280,
+        800
+      ],
+      "passed": true
+    },
+    {
+      "language": "zh",
+      "expected_viewport": [
+        960,
+        640
+      ],
+      "caption": "当前设备的模型请求与费用估算，不包含 Hook 事件。组织网关账单请以管理员后台为准。",
+      "captionHeight": 20,
+      "captionScrollWidth": 736,
+      "captionWidth": 736,
+      "documentWidth": 960,
+      "proxyNotice": true,
+      "viewport": [
+        960,
+        640
+      ],
+      "passed": true
+    },
+    {
+      "language": "zh-TW",
+      "expected_viewport": [
+        1280,
+        800
+      ],
+      "caption": "目前裝置的模型請求與費用估算，不包含 Hook 事件。組織閘道帳單請以管理員後台為準。",
+      "captionHeight": 40,
+      "captionScrollWidth": 450,
+      "captionWidth": 450,
+      "documentWidth": 1280,
+      "proxyNotice": true,
+      "viewport": [
+        1280,
+        800
+      ],
+      "passed": true
+    },
+    {
+      "language": "zh-TW",
+      "expected_viewport": [
+        960,
+        640
+      ],
+      "caption": "目前裝置的模型請求與費用估算，不包含 Hook 事件。組織閘道帳單請以管理員後台為準。",
+      "captionHeight": 20,
+      "captionScrollWidth": 736,
+      "captionWidth": 736,
+      "documentWidth": 960,
+      "proxyNotice": true,
+      "viewport": [
+        960,
+        640
+      ],
+      "passed": true
+    },
+    {
+      "language": "en",
+      "expected_viewport": [
+        1280,
+        800
+      ],
+      "caption": "Model requests and estimated costs recorded on this device, excluding hook events. Organization gateway bills are available in the admin console.",
+      "captionHeight": 40,
+      "captionScrollWidth": 570,
+      "captionWidth": 570,
+      "documentWidth": 1280,
+      "proxyNotice": false,
+      "viewport": [
+        1280,
+        800
+      ],
+      "passed": true
+    },
+    {
+      "language": "en",
+      "expected_viewport": [
+        960,
+        640
+      ],
+      "caption": "Model requests and estimated costs recorded on this device, excluding hook events. Organization gateway bills are available in the admin console.",
+      "captionHeight": 40,
+      "captionScrollWidth": 736,
+      "captionWidth": 736,
+      "documentWidth": 960,
+      "proxyNotice": false,
+      "viewport": [
+        960,
+        640
+      ],
+      "passed": true
+    },
+    {
+      "language": "ja",
+      "expected_viewport": [
+        1280,
+        800
+      ],
+      "caption": "この端末のモデルリクエストと推定料金です。Hook イベントは含みません。組織ゲートウェイの請求は管理画面で確認してください。",
+      "captionHeight": 40,
+      "captionScrollWidth": 554,
+      "captionWidth": 554,
+      "documentWidth": 1280,
+      "proxyNotice": true,
+      "viewport": [
+        1280,
+        800
+      ],
+      "passed": true
+    },
+    {
+      "language": "ja",
+      "expected_viewport": [
+        960,
+        640
+      ],
+      "caption": "この端末のモデルリクエストと推定料金です。Hook イベントは含みません。組織ゲートウェイの請求は管理画面で確認してください。",
+      "captionHeight": 40,
+      "captionScrollWidth": 736,
+      "captionWidth": 736,
+      "documentWidth": 960,
+      "proxyNotice": true,
+      "viewport": [
+        960,
+        640
+      ],
+      "passed": true
+    }
+  ]
+}

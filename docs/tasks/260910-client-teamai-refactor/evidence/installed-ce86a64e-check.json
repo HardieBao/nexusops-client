@@ -1,0 +1,12 @@
+{
+  "client_commit": "ce86a64e55f39011b823e9b8ad2a5c45bfc0d39c",
+  "uninstaller_exit": 0,
+  "installer_exit": 0,
+  "worker_version": "0.22.0",
+  "proxy_running": false,
+  "isolated_database_preserved": true,
+  "registry_shortcuts_startup_restored": true,
+  "installed_exe_sha256": "2b450f9ba81e9b8b1eed914477023d3c32291772b04ab1fac0a84d24ce2a57aa",
+  "locale_viewport_cases_passed": 8,
+  "runtime_files_verified": 12
+}

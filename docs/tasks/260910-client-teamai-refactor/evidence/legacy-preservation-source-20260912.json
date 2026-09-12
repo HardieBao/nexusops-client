@@ -1,0 +1,120 @@
+{
+  "baseline": "f811e352fe3904214a2b2305baff81964a416c56",
+  "current": "ce86a64e55f39011b823e9b8ad2a5c45bfc0d39c",
+  "method": "Git tracked component-tree comparison and TypeScript AST-printed App handler initializers; excludes runtime/dependency behavior",
+  "component_areas": [
+    {
+      "path": "src/components/prompts",
+      "baseline_files": 7,
+      "changed_files": []
+    },
+    {
+      "path": "src/components/mcp",
+      "baseline_files": 4,
+      "changed_files": []
+    },
+    {
+      "path": "src/components/skills",
+      "baseline_files": 4,
+      "changed_files": []
+    },
+    {
+      "path": "src/components/agents",
+      "baseline_files": 1,
+      "changed_files": []
+    },
+    {
+      "path": "src/components/providers",
+      "baseline_files": 70,
+      "changed_files": []
+    },
+    {
+      "path": "src/components/sessions",
+      "baseline_files": 5,
+      "changed_files": []
+    },
+    {
+      "path": "src/components/workspace",
+      "baseline_files": 3,
+      "changed_files": []
+    },
+    {
+      "path": "src/components/openclaw",
+      "baseline_files": 6,
+      "changed_files": []
+    },
+    {
+      "path": "src/components/hermes",
+      "baseline_files": 1,
+      "changed_files": []
+    },
+    {
+      "path": "src/components/settings",
+      "baseline_files": 21,
+      "changed_files": []
+    },
+    {
+      "path": "src/components/usage",
+      "baseline_files": 14,
+      "changed_files": []
+    }
+  ],
+  "app_handlers": [
+    {
+      "name": "handleEnablePiProvider",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleDisableOmo",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleDisableOmoSlim",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleKeyDown",
+      "status": "changed"
+    },
+    {
+      "name": "handleOpenWebsite",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleEditProvider",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleConfirmAction",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleDuplicateProvider",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleOpenTerminal",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleImportSuccess",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleWindowMinimize",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleWindowToggleMaximize",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleWindowClose",
+      "status": "unchanged"
+    },
+    {
+      "name": "handleOpenSkillsDiscovery",
+      "status": "unchanged"
+    }
+  ]
+}

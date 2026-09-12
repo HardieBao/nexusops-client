@@ -6,14 +6,14 @@
 
 | 项目 | 本次要求 |
 | --- | --- |
-| 客户端 | 2fa03d89 Windows x64 包，已完成实际安装与原生回退复测；路径和 SHA256 见下方 |
+| 客户端 | ce86a64e Windows x64 包，包含隐藏工具回退修复与四语言统计口径说明；路径和 SHA256 见下方 |
 | UAT | https://uat-api.ai-nexusops.app；Gateway / 管理控制台版本 23a5657416db57938b78cf2c86a4533153a8220e |
 | 工具 | 首发联调为 Codex / Claude Code；使用支持 Hook 的版本，记录实际版本 |
 | 测试身份 | 管理员测试账号、至少两个测试成员及对应成员 Key / 本人 Team Profile；由已有管理员提供，不能借本地设置冒充身份 |
 | 本机依赖 | 不需要员工全局安装 TeamAI、Node.js 或 npm；客户端包含所需 worker 与运行时 |
 | 交付属性 | Windows 未签名试用包；其他系统、代码签名和自动更新不属于本轮已验收结果 |
 
-试用包：[NexusOps Client 2fa03d89](D:/Hardie作品/nexusops-client/src-tauri/target/deliverables/2fa03d89/NexusOps-Client-0.1.0-2fa03d89-x64-setup.exe)。SHA256：`7e19997e6ef80da410b45b18f44a15f743ee7d1ed38c11cc11243a00262952d3`。参见 [打包与原生回归证据](evidence/package-and-native-2fa03d89.md)。
+试用包：[NexusOps Client ce86a64e](D:/Hardie作品/nexusops-client/src-tauri/target/deliverables/ce86a64e/NexusOps-Client-0.1.0-ce86a64e-x64-setup.exe)。SHA256：`5a43c3064c135a687dd77fb51236cfd054d6d7ae20ffad52c93ad5f62d23c7b7`。参见 [打包与原生检查证据](evidence/package-and-native-ce86a64e.md)。
 
 74eddefe 安装包不包含隐藏工具回退修复；不要混用两个版本的包与哈希。
 

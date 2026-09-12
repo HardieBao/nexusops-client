@@ -1,0 +1,101 @@
+{
+  "hashes": {
+    "baseline": "6d14939a7328010602c6b825375d9dee38e0a86e9824cf1d2a2f55fdc4e18d59",
+    "candidate": "5fb08135173ebde994f70a45d40cf2954c6ee6cbab222358e90547710f2b8b45"
+  },
+  "samples": [
+    {
+      "version": "baseline",
+      "iteration": 1,
+      "observed_ready_ms": 940.7,
+      "process_tree_working_set_bytes": 437907456,
+      "process_count": 7,
+      "fixture_directory": "C:\\Users\\13013\\AppData\\Local\\Temp\\nexusops-performance-i_arbngr"
+    },
+    {
+      "version": "candidate",
+      "iteration": 1,
+      "observed_ready_ms": 884.3,
+      "process_tree_working_set_bytes": 426631168,
+      "process_count": 7,
+      "fixture_directory": "C:\\Users\\13013\\AppData\\Local\\Temp\\nexusops-performance-n9s8hswv"
+    },
+    {
+      "version": "baseline",
+      "iteration": 2,
+      "observed_ready_ms": 867.3,
+      "process_tree_working_set_bytes": 434561024,
+      "process_count": 7,
+      "fixture_directory": "C:\\Users\\13013\\AppData\\Local\\Temp\\nexusops-performance-hxis7_ga"
+    },
+    {
+      "version": "candidate",
+      "iteration": 2,
+      "observed_ready_ms": 862.0,
+      "process_tree_working_set_bytes": 426180608,
+      "process_count": 7,
+      "fixture_directory": "C:\\Users\\13013\\AppData\\Local\\Temp\\nexusops-performance-9fc41q90"
+    },
+    {
+      "version": "baseline",
+      "iteration": 3,
+      "observed_ready_ms": 866.5,
+      "process_tree_working_set_bytes": 434266112,
+      "process_count": 7,
+      "fixture_directory": "C:\\Users\\13013\\AppData\\Local\\Temp\\nexusops-performance-1lezqk5e"
+    },
+    {
+      "version": "candidate",
+      "iteration": 3,
+      "observed_ready_ms": 869.3,
+      "process_tree_working_set_bytes": 425127936,
+      "process_count": 7,
+      "fixture_directory": "C:\\Users\\13013\\AppData\\Local\\Temp\\nexusops-performance-dxb9uurc"
+    },
+    {
+      "version": "baseline",
+      "iteration": 4,
+      "observed_ready_ms": 864.1,
+      "process_tree_working_set_bytes": 432865280,
+      "process_count": 7,
+      "fixture_directory": "C:\\Users\\13013\\AppData\\Local\\Temp\\nexusops-performance-8thmz0o_"
+    },
+    {
+      "version": "candidate",
+      "iteration": 4,
+      "observed_ready_ms": 865.5,
+      "process_tree_working_set_bytes": 428032000,
+      "process_count": 7,
+      "fixture_directory": "C:\\Users\\13013\\AppData\\Local\\Temp\\nexusops-performance-_v6d4t2x"
+    },
+    {
+      "version": "baseline",
+      "iteration": 5,
+      "observed_ready_ms": 871.2,
+      "process_tree_working_set_bytes": 432726016,
+      "process_count": 7,
+      "fixture_directory": "C:\\Users\\13013\\AppData\\Local\\Temp\\nexusops-performance-mwnp3d3t"
+    },
+    {
+      "version": "candidate",
+      "iteration": 5,
+      "observed_ready_ms": 948.6,
+      "process_tree_working_set_bytes": 430223360,
+      "process_count": 7,
+      "fixture_directory": "C:\\Users\\13013\\AppData\\Local\\Temp\\nexusops-performance-i_2mm0gl"
+    }
+  ],
+  "summary": {
+    "baseline": {
+      "ready_ms_median": 867.3,
+      "working_set_bytes_median": 434266112
+    },
+    "candidate": {
+      "ready_ms_median": 869.3,
+      "working_set_bytes_median": 426631168
+    },
+    "ready_ratio": 1.002306007148622,
+    "working_set_ratio": 0.9824187432796967
+  },
+  "method": "Five alternating new-process launches per version, empty app/WebView data directories. Readiness is first visible enabled control; includes automation probe overhead. Working set sums native app and descendant processes after three idle seconds and may double-count shared pages. No OS disk-cache flush. Fixture directories retained."
+}

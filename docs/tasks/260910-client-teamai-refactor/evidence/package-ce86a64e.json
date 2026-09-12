@@ -1,0 +1,24 @@
+{
+  "client_commit": "ce86a64e55f39011b823e9b8ad2a5c45bfc0d39c",
+  "server_commit": "23a5657416db57938b78cf2c86a4533153a8220e",
+  "package": "D:\\Hardie作品\\nexusops-client\\src-tauri\\target\\deliverables\\ce86a64e\\NexusOps-Client-0.1.0-ce86a64e-x64-setup.exe",
+  "package_sha256": "5a43c3064c135a687dd77fb51236cfd054d6d7ae20ffad52c93ad5f62d23c7b7",
+  "exe_sha256": "5fb08135173ebde994f70a45d40cf2954c6ee6cbab222358e90547710f2b8b45",
+  "signed": false,
+  "uat_authenticated_acceptance": "pending",
+  "runtime_files": {
+    "LICENSE-Node": "148eacf7863ef4329224a29398623077200a27194aa075569faf4a0a85566ca5",
+    "LICENSE-TeamAI": "31154d9c1a8bd8d37b449bdbb8a04f9b4618e5d330b52b0fdb7c452414d75a41",
+    "licenses/extend-shallow-2.0.1-LICENSE": "daca23d50b0f54d36d6da1b16c82dfea6461e2ae20de0e869957e44cc6d34781",
+    "licenses/gray-matter-4.0.3-LICENSE": "e70ff771504ba41f2be55de812a017ff46433d7a250c862e38fc419159e44500",
+    "licenses/is-extendable-0.1.1-LICENSE": "0798f37cff4a3f438c071316e41f94ffe110116a313ab0fc4f8caa07218f1f0f",
+    "licenses/js-yaml-3.15.2-LICENSE": "a07bc24468b9654ce76a547d47a2db282d07733b715db4c73a98bd63961f9550",
+    "licenses/kind-of-6.0.3-LICENSE": "4cd903859549d4b20b571041f96dfae1136ed079c476126268f9d7cc1b611150",
+    "licenses/section-matter-1.0.0-LICENSE": "6d99b653e1464192ef347e48fe78943bab7570e36d12a6de49b4474d46b4a39c",
+    "licenses/strip-bom-string-1.0.0-LICENSE": "aab63d733edfbb74393d94d75ece4ca89577d9f4a852a4cb18fb25cc8e254209",
+    "manifest.json": "9a42969ac10586978525b0fe3471022d12a08ad814d90865f7a780523bee50fb",
+    "node.exe": "9a4eb5f1c29c6a2e93852ead46b999e284a6a5ca8bab4d4e241d587d025a52de",
+    "worker.mjs": "659c90f48a480b0be8408fff52f0493810056d3e78f8f5089a01c72bcdf8ec96"
+  },
+  "installed_exe_sha256": "2b450f9ba81e9b8b1eed914477023d3c32291772b04ab1fac0a84d24ce2a57aa"
+}

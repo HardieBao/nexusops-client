@@ -61,6 +61,8 @@
 
 ## T10 实际验证进展（2026-09-12）
 
+- [源码保留复核](evidence/legacy-preservation-20260912.md)：11 个原组件目录 136 文件未改，公共 hooks / API / query / config 未改；14 个原 App 操作回调均存在，13 个初始化表达式一致，唯一变化为已明确的新键盘父页面规则。此为源码证据，不替代运行验收。
+
 - 15 类保存页面已用真实 EXE 逐项退出 / 重启恢复，另验证未知值、首次无值与 Pi 的 MCP 回退；见 [原生页面证据](evidence/view-migration-and-fallback-20260912.md)。这覆盖页面可达与恢复，不代表表中全部编辑动作。
 - 新增专属页面回退修复在实际安装的 2fa03d89 中 10/10 通过；Ctrl+,、Escape、Tab 与 Enter 已执行，见 [新包证据](evidence/package-and-native-2fa03d89.md)。
 - Claude 个人提示词的新建 / 编辑取消、保存、启用、重启持久化、禁用及删除已通过真实文件与数据库核对；托盘仅确认图标与菜单显示，操作仍未验收。见 [提示词与托盘记录](evidence/prompt-and-tray-20260912.md)。
