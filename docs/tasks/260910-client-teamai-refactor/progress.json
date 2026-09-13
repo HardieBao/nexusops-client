@@ -1,6 +1,6 @@
 {
   "objective": "按照 task.md 执行，完成 CLIENT-TEAMAI 的 T00—T23、M1—M5 与 S01—S30",
-  "status": "blocked",
+  "status": "in_progress",
   "client_branch": "codex/client-teamai-refactor",
   "client_baseline": "f811e352fe3904214a2b2305baff81964a416c56",
   "server_baseline": "9a3022a02dbe1cbbe6d6823e04d18c14a9b831e6",
@@ -88,7 +88,7 @@
     "health": "ok",
     "evidence": "evidence/uat-deployed-20260911.md",
     "entitlement": "ready",
-    "authenticated_acceptance": "pending"
+    "authenticated_acceptance": "test identities created and verified; full business acceptance pending"
   },
   "client_checkpoint": "ce86a64e55f39011b823e9b8ad2a5c45bfc0d39c",
   "delivery_verification_20260912": {
@@ -167,12 +167,30 @@
     "uat_revision": "23a5657416db57938b78cf2c86a4533153a8220e",
     "unauthenticated_projects_status": 401,
     "missing": [
-      "authorized UAT administrator/member test sessions or credential file path",
       "tray open/quit manual result",
       "clean Windows user or VM acceptance environment/result"
     ],
     "same_uat_identity_block_observed_across_goal_turns": "at least 3 consecutive continuations",
     "build_or_test_still_running": false,
-    "full_objective_complete": false
+    "full_objective_complete": false,
+    "uat_identity_block_resolved_on": "2026-09-13"
+  },
+  "uat_test_identities_20260913": {
+    "evidence": "evidence/uat-test-identities-20260913.md",
+    "administrator_id": 7,
+    "member_ids": [
+      8,
+      9
+    ],
+    "member_key_ids": [
+      24,
+      25
+    ],
+    "group_id": 11,
+    "normal_login_verified": true,
+    "administrator_totp_and_step_up_verified": true,
+    "profiles_exported": true,
+    "model_upstream_configured": false,
+    "full_uat_acceptance": "pending"
   }
 }

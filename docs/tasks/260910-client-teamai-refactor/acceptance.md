@@ -1,6 +1,6 @@
 # CLIENT-TEAMAI 验收进度
 
-更新日期：2026-09-12。当前为部分完成、外部验收条件阻塞，不是最终完成报告。完整剩余任务和恢复条件见 [remaining-acceptance.md](remaining-acceptance.md)。
+更新日期：2026-09-13。当前为部分完成，UAT 测试身份已就绪，可继续联合验收，不是最终完成报告。见 [身份创建记录](evidence/uat-test-identities-20260913.md) 与 [剩余验收](remaining-acceptance.md)。
 
 当前试用包：[ce86a64e 安装、语言与性能验证](evidence/package-and-native-ce86a64e.md)。实际安装 / 卸载和资源校验通过，四语言两组视口 8/8，通过最终源码 1192 项测试；各 5 次同机基线 / 候选性能未超过 20% 回归阈值。更早检查点保留历史，试用链接以 [试用说明](trial-guide.md) 为准。
 

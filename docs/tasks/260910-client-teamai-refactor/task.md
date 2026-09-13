@@ -6,7 +6,7 @@
 | --- | --- |
 | 任务编号 | CLIENT-TEAMAI |
 | 制定日期 | 2026-09-10 |
-| 当前状态 | 外部验收条件阻塞：T00—T03 已验收，其余任务保留未验收状态；缺少 UAT 测试身份、托盘人工结果及干净 Windows 环境，详见 remaining-acceptance.md |
+| 当前状态 | UAT 测试身份已于 2026-09-13 生成并验证，可继续联合验收；T00—T03 已验收，其余按原条件核对，托盘人工及干净 Windows 结果仍待完成 |
 | 客户端仓库 | `nexusops-client`；规划基线 `f811e352` |
 | 服务端与控制台仓库 | `nexusops`；规划基线 `9a3022a0` |
 | 已研究的 TeamAI 基线 | `Tencent/teamai-cli`，`6ae0619d067b1699bb2c6e435abf3ffe11a21d71`，package version `0.22.0` |
