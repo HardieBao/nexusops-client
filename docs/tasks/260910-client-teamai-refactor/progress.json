@@ -88,7 +88,7 @@
     "health": "ok",
     "evidence": "evidence/uat-deployed-20260911.md",
     "entitlement": "ready",
-    "authenticated_acceptance": "test identities created and verified; full business acceptance pending"
+    "authenticated_acceptance": "core assets, native install/ACK, telemetry, admin/member permissions verified; full scenario matrix pending"
   },
   "client_checkpoint": "ce86a64e55f39011b823e9b8ad2a5c45bfc0d39c",
   "delivery_verification_20260912": {
@@ -191,6 +191,33 @@
     "administrator_totp_and_step_up_verified": true,
     "profiles_exported": true,
     "model_upstream_configured": false,
-    "full_uat_acceptance": "pending"
+    "full_uat_acceptance": "core flow verified; remaining scenarios in evidence/uat-core-acceptance-20260913.md"
+  },
+  "uat_core_acceptance_20260913": {
+    "evidence": "evidence/uat-core-acceptance-20260913.md",
+    "gateway_program_revision": "23a5657416db57938b78cf2c86a4533153a8220e",
+    "storage_config_commit": "d8873b65ed6d00e4f5de25e15ceadd31255f7591",
+    "skill_upload_503": "fixed: internal private S3 deployed and verified",
+    "published_asset_ids": [
+      1,
+      2
+    ],
+    "installed_assets_per_runtime": 2,
+    "acknowledged_per_runtime": 2,
+    "unique_fixture_events_local": 20,
+    "unique_fixture_events_server": 20,
+    "retransmitted_events": 5,
+    "duplicate_increase": 0,
+    "actual_cli_events": {
+      "codex": 3,
+      "claude-code": 3
+    },
+    "model_endpoint": "local fixture; UAT upstream not configured",
+    "administrator_browser_login_totp": true,
+    "administrator_employee_runtime_filters": true,
+    "member_jwt_admin_api_status": 403,
+    "member_keys_admin_api_status": 401,
+    "identity_history_limitation": "Returning member history remains hidden until collection is enabled and member_id revalidated; persisted data survives",
+    "full_objective_complete": false
   }
 }
