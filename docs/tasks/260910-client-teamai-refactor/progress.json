@@ -84,9 +84,9 @@
   "remaining_scope": "task.md 全部原范围保持有效，原生、TeamAI、服务端与 UAT 验收未被替代为 mock 或静态页面",
   "server_checkpoint": "23a5657416db57938b78cf2c86a4533153a8220e",
   "uat_deployment": {
-    "revision": "23a5657416db57938b78cf2c86a4533153a8220e",
+    "revision": "13c6f4874397d534787eb5bbd10aaa4e3581243c",
     "health": "ok",
-    "evidence": "evidence/uat-deployed-20260911.md",
+    "evidence": "evidence/uat-download-rollout-20260914.md",
     "entitlement": "ready",
     "authenticated_acceptance": "core assets, native install/ACK, telemetry, admin/member permissions verified; full scenario matrix pending"
   },
@@ -219,5 +219,13 @@
     "member_keys_admin_api_status": 401,
     "identity_history_limitation": "Returning member history remains hidden until collection is enabled and member_id revalidated; persisted data survives",
     "full_objective_complete": false
+  },
+  "uat_download_rollout_20260914": {
+    "evidence": "evidence/uat-download-rollout-20260914.md",
+    "gateway_revision": "13c6f4874397d534787eb5bbd10aaa4e3581243c",
+    "website_revision": "13c6f4874397d534787eb5bbd10aaa4e3581243c",
+    "online_download_entry": "verified",
+    "member_asset_regression": "passed",
+    "full_client_objective_complete": false
   }
 }

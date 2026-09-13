@@ -7,7 +7,7 @@
 | 项目 | 本次要求 |
 | --- | --- |
 | 客户端 | ce86a64e Windows x64 包，包含隐藏工具回退修复与四语言统计口径说明；路径和 SHA256 见下方 |
-| UAT | https://uat-api.ai-nexusops.app；Gateway / 管理控制台版本 23a5657416db57938b78cf2c86a4533153a8220e |
+| UAT | https://uat-api.ai-nexusops.app；Gateway / 管理控制台版本 13c6f4874397d534787eb5bbd10aaa4e3581243c；下载入口已于 2026-09-14 上线 |
 | 工具 | 首发联调为 Codex / Claude Code；使用支持 Hook 的版本，记录实际版本 |
 | 测试身份 | 管理员测试账号、至少两个测试成员及对应成员 Key / 本人 Team Profile；由已有管理员提供，不能借本地设置冒充身份 |
 | 本机依赖 | 不需要员工全局安装 TeamAI、Node.js 或 npm；客户端包含所需 worker 与运行时 |
