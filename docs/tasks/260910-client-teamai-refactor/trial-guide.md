@@ -13,7 +13,7 @@
 | 本机依赖 | 不需要员工全局安装 TeamAI、Node.js 或 npm；客户端包含所需 worker 与运行时 |
 | 交付属性 | Windows 未签名试用包；其他系统、代码签名和自动更新不属于本轮已验收结果 |
 
-试用包：[NexusOps Client ce86a64e](D:/Hardie作品/nexusops-client/src-tauri/target/deliverables/ce86a64e/NexusOps-Client-0.1.0-ce86a64e-x64-setup.exe)。SHA256：`5a43c3064c135a687dd77fb51236cfd054d6d7ae20ffad52c93ad5f62d23c7b7`。参见 [打包与原生检查证据](evidence/package-and-native-ce86a64e.md)。
+试用包：[Windows x64 安装包](https://github.com/HardieBao/nexusops-client/releases/download/client-preview-0.1.0-ce86a64e/NexusOps-Client-0.1.0-ce86a64e-x64-setup.exe)；[发布说明与校验文件](https://github.com/HardieBao/nexusops-client/releases/tag/client-preview-0.1.0-ce86a64e)。2026-09-13 已公开为测试版，无需 GitHub 登录；匿名完整下载的大小和 SHA256 已验证。SHA256：`5a43c3064c135a687dd77fb51236cfd054d6d7ae20ffad52c93ad5f62d23c7b7`。参见 [打包与原生检查证据](evidence/package-and-native-ce86a64e.md)。
 
 74eddefe 安装包不包含隐藏工具回退修复；不要混用两个版本的包与哈希。
 
