@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Layers } from "lucide-react";
+import { Layers, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Button } from "@/components/ui/button";
 import { UniversalProviderCard } from "./UniversalProviderCard";
 import { UniversalProviderFormModal } from "./UniversalProviderFormModal";
 import { universalProvidersApi } from "@/lib/api";
@@ -216,18 +217,30 @@ export function UniversalProviderPanel() {
   );
 
   const providerList = Object.values(providers);
+  const handleAdd = () => {
+    setEditingProvider(null);
+    setIsFormOpen(true);
+  };
 
   return (
     <div className="space-y-4">
       {/* 头部 */}
-      <div className="flex items-center gap-2">
-        <Layers className="h-5 w-5 text-primary" />
-        <h2 className="text-lg font-semibold">
-          {t("universalProvider.title", { defaultValue: "统一供应商" })}
-        </h2>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-          {providerList.length}
-        </span>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Layers className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">
+            {t("universalProvider.title", { defaultValue: "统一供应商" })}
+          </h2>
+          <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+            {providerList.length}
+          </span>
+        </div>
+        {providerList.length > 0 && (
+          <Button type="button" onClick={handleAdd}>
+            <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+            {t("universalProvider.add", { defaultValue: "添加统一供应商" })}
+          </Button>
+        )}
       </div>
 
       {/* 描述 */}
@@ -256,6 +269,10 @@ export function UniversalProviderPanel() {
               defaultValue: "点击下方「添加统一供应商」按钮创建一个",
             })}
           </p>
+          <Button type="button" className="mt-4" onClick={handleAdd}>
+            <Plus className="mr-2 h-4 w-4" aria-hidden="true" />
+            {t("universalProvider.add", { defaultValue: "添加统一供应商" })}
+          </Button>
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

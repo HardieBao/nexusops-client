@@ -6,6 +6,14 @@ const readRootFile = (filePath: string) =>
   readFileSync(path.resolve(process.cwd(), filePath), "utf8");
 
 describe("NexusOps Client branding and protocol", () => {
+  it("uses the native NexusOps mark for the sidebar and about page", () => {
+    expect(
+      readFileSync("src/assets/icons/app-icon.png").equals(
+        readFileSync("src-tauri/icons/128x128.png"),
+      ),
+    ).toBe(true);
+  });
+
   it("registers only the nexusops deep-link scheme", () => {
     const config = JSON.parse(readRootFile("src-tauri/tauri.conf.json"));
     const windowsConfig = JSON.parse(
